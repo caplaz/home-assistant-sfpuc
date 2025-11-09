@@ -104,14 +104,59 @@ class SFPUCScraper:
             )
 
             # Check if login successful
-            if "MY_ACCOUNT_RSF.aspx" in response.url or "Welcome" in response.text:
-                _LOGGER.info(
-                    "SFPUC login successful for user: %s", self.username[:3] + "***"
+            # Look for indicators of successful login vs failure
+            if response.status_code == 200:
+                # Check for common success indicators
+                success_indicators = [
+                    "MY_ACCOUNT_RSF.aspx" in response.url,
+                    "Welcome" in response.text,
+                    "Dashboard" in response.text,
+                    "Account" in response.text,
+                    "Usage" in response.text,
+                    "Logout" in response.text,
+                ]
+
+                # Check for failure indicators
+                failure_indicators = [
+                    "Invalid" in response.text and "password" in response.text.lower(),
+                    "Login failed" in response.text,
+                    "Authentication failed" in response.text,
+                    "Error" in response.text and "login" in response.text.lower(),
+                    "Please try again" in response.text,
+                    response.url.endswith("/"),  # Still on login page
+                ]
+
+                success_score = sum(success_indicators)
+                failure_score = sum(failure_indicators)
+
+                _LOGGER.debug(
+                    "Login analysis - Success indicators: %d, Failure indicators: %d",
+                    success_score,
+                    failure_score,
                 )
-                return True
+                _LOGGER.debug("Response URL: %s", response.url)
+                _LOGGER.debug(
+                    "Response contains 'Welcome': %s", "Welcome" in response.text
+                )
+                _LOGGER.debug(
+                    "Response contains 'Invalid': %s", "Invalid" in response.text
+                )
+
+                if success_score > 0 and failure_score == 0:
+                    _LOGGER.info(
+                        "SFPUC login successful for user: %s", self.username[:3] + "***"
+                    )
+                    return True
+                else:
+                    _LOGGER.warning(
+                        "SFPUC login failed - success_score: %d, failure_score: %d",
+                        success_score,
+                        failure_score,
+                    )
+                    return False
             else:
                 _LOGGER.warning(
-                    "SFPUC login failed - unexpected response. URL: %s", response.url
+                    "SFPUC login failed with status code: %s", response.status_code
                 )
                 return False
 

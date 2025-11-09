@@ -1,5 +1,6 @@
 """Config flow for SF Water integration."""
 
+import asyncio
 import logging
 from typing import Any
 
@@ -30,12 +31,15 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 user_input[CONF_USERNAME][:3] + "***",
             )
             try:
-                # Validate credentials by attempting login
+                # Validate credentials by attempting login (run in executor to avoid blocking)
                 scraper = SFPUCScraper(
                     user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
                 )
                 _LOGGER.debug("Created scraper instance, attempting login...")
-                if scraper.login():
+                loop = asyncio.get_event_loop()
+                login_success = await loop.run_in_executor(None, scraper.login)
+
+                if login_success:
                     _LOGGER.info(
                         "Successfully validated SFPUC credentials for user: %s",
                         user_input[CONF_USERNAME][:3] + "***",

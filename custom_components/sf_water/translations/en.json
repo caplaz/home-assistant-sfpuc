@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "San Francisco Water Setup",
-        "description": "Connect to your SFPUC account to monitor water usage.\n\n**Required:** SFPUC username and password for account access.\n\n**Setup Process:**\n• **Account Credentials** - Login to SFPUC portal\n• **Data Access** - Download historical usage data\n• **Sensor Creation** - Daily water usage sensor in gallons\n• **Automatic Updates** - Data refreshes every 12 hours\n\n**How It Works:**\n\n🔐 **SFPUC Login**\n• Secure authentication to SFPUC water portal\n• Access to your account's usage history\n• Automatic session management\n\n📊 **Usage Data**\n• Downloads Excel files with historical data\n• Parses daily water consumption\n• Stores data in Home Assistant database\n\n💧 **Water Sensor**\n• Daily usage in gallons (cumulative)\n• State class: TOTAL_INCREASING\n• Device class: water\n• Updates every 12 hours\n\n**Configuration Tips:**\n• Username is typically your account number or email\n• Password is your SFPUC portal password\n• Data updates automatically every 12 hours\n• All data is stored locally in Home Assistant database",
+        "description": "Connect to your SFPUC account to monitor water usage.\n\nRequired: SFPUC username and password from https://myaccount-water.sfpuc.org\n\n Water Sensor\n• Daily usage in gallons (cumulative)\n• Updates every 12 hours\n\nConfiguration Tips:\n• Username is typically your account number or email\n• Password is your SFPUC portal password\n• Data updates automatically every 12 hours\n• All data is stored locally in Home Assistant database",
         "data": {
           "username": "SFPUC Username",
           "password": "SFPUC Password"

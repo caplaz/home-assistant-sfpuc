@@ -30,16 +30,29 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up SF Water from a config entry."""
     _LOGGER.info("Setting up SF Water integration")
+    _LOGGER.debug(
+        "Config entry data: %s",
+        {
+            k: "***" if k in ["username", "password"] else v
+            for k, v in entry.data.items()
+        },
+    )
 
     # Create coordinator for managing updates
+    _LOGGER.debug("Creating SFWaterCoordinator")
     coordinator = SFWaterCoordinator(hass, entry)
+    _LOGGER.debug("Coordinator created, performing first refresh")
     await coordinator.async_config_entry_first_refresh()
+    _LOGGER.info("Coordinator initialized successfully")
 
     # Store coordinator in entry runtime data
     entry.runtime_data = coordinator
+    _LOGGER.debug("Coordinator stored in entry runtime data")
 
     # Set up platforms
+    _LOGGER.debug("Forwarding setup to sensor platform")
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    _LOGGER.info("SF Water integration setup completed")
 
     return True
 

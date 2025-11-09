@@ -7,7 +7,7 @@ homeassistant:
   latitude: 37.7749
   longitude: -122.4194
   elevation: 16 # San Francisco elevation
-  unit_system: imperial
+  unit_system: us_customary
   currency: USD
   time_zone: America/Los_Angeles
 
@@ -28,62 +28,5 @@ http:
   trusted_proxies:
     - 127.0.0.1
     - ::1
-
-# Sample sensors for testing the SF Water integration
-sensor:
-  # Mock water usage sensors for testing
-  - platform: template
-    sensors:
-      mock_daily_usage:
-        friendly_name: "Mock Daily Water Usage"
-        unit_of_measurement: "gal"
-        device_class: water
-        state_class: total_increasing
-        value_template: "{{ (now().timestamp() // 86400) * 150 + (now().hour * 10) }}"
-
-  # Water pressure sensor (for context)
-  - platform: template
-    sensors:
-      water_pressure:
-        friendly_name: "Water Pressure"
-        unit_of_measurement: "psi"
-        device_class: pressure
-        value_template: "{{ 60 + (now().minute % 10 - 5) }}"
-
-  # Temperature (for water quality context)
-  - platform: template
-    sensors:
-      water_temperature:
-        friendly_name: "Water Temperature"
-        unit_of_measurement: "°F"
-        device_class: temperature
-        value_template: "{{ 55 + (now().hour % 24 - 12) }}"
-
-# Binary sensors for water system status
-binary_sensor:
-  - platform: template
-    sensors:
-      water_flow_state:
-        friendly_name: "Water Flow State"
-        value_template: "{{ (now().minute % 10) < 8 }}" # Mostly flowing
-
-# Utility meter for water usage tracking
-utility_meter:
-  daily_water:
-    source: sensor.mock_daily_usage
-    cycle: daily
-
 # Note: The SF Water integration is added through the UI
 # Go to Settings → Devices & Services → Add Integration → SF Water
-
-# Dashboard configuration for testing
-lovelace:
-  mode: yaml
-  dashboards:
-    sf-water-test:
-      mode: yaml
-      filename: sf-water-dashboard.yaml
-      title: SF Water Test
-      icon: mdi:water
-      show_in_sidebar: true
-      require_admin: false

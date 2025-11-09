@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timedelta
+import logging
 from typing import Any
 
 from bs4 import BeautifulSoup
@@ -21,6 +22,8 @@ from homeassistant.util import dt as dt_util
 import requests
 
 from .const import CONF_PASSWORD, CONF_USERNAME, DEFAULT_UPDATE_INTERVAL, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class SFPUCScraper:
@@ -49,9 +52,16 @@ class SFPUCScraper:
     def login(self) -> bool:
         """Login to SFPUC account."""
         try:
+            _LOGGER.debug(
+                "Starting SFPUC login process for user: %s", self.username[:3] + "***"
+            )
+
             # GET the login page to extract ViewState
             login_url = f"{self.base_url}/"
+            _LOGGER.debug("Fetching login page: %s", login_url)
             response = self.session.get(login_url)
+            _LOGGER.debug("Login page response status: %s", response.status_code)
+
             soup = BeautifulSoup(response.content, "html.parser")
 
             # Extract hidden form fields
@@ -60,7 +70,10 @@ class SFPUCScraper:
             viewstate_generator = soup.find("input", {"name": "__VIEWSTATEGENERATOR"})
 
             if not viewstate or not eventvalidation:
+                _LOGGER.warning("Failed to extract form tokens from login page")
                 return False
+
+            _LOGGER.debug("Successfully extracted form tokens")
 
             # Login form data
             login_data = {
@@ -80,17 +93,28 @@ class SFPUCScraper:
             }
 
             # Submit login
+            _LOGGER.debug("Submitting login form")
             response = self.session.post(
                 login_url, data=login_data, allow_redirects=True
+            )
+            _LOGGER.debug(
+                "Login response status: %s, URL: %s", response.status_code, response.url
             )
 
             # Check if login successful
             if "MY_ACCOUNT_RSF.aspx" in response.url or "Welcome" in response.text:
+                _LOGGER.info(
+                    "SFPUC login successful for user: %s", self.username[:3] + "***"
+                )
                 return True
             else:
+                _LOGGER.warning(
+                    "SFPUC login failed - unexpected response. URL: %s", response.url
+                )
                 return False
 
-        except Exception:
+        except Exception as e:
+            _LOGGER.error("Exception during SFPUC login: %s", e)
             return False
 
     def get_usage_data(
@@ -113,6 +137,13 @@ class SFPUCScraper:
             end_date = start_date
 
         try:
+            _LOGGER.debug(
+                "Fetching %s usage data from %s to %s",
+                resolution,
+                start_date.date(),
+                end_date.date(),
+            )
+
             # Navigate to appropriate usage page based on resolution
             if resolution == "hourly":
                 usage_url = f"{self.base_url}/USE_HOURLY.aspx"
@@ -124,9 +155,13 @@ class SFPUCScraper:
                 usage_url = f"{self.base_url}/USE_MONTHLY.aspx"
                 data_type = "Monthly+Use"
             else:
+                _LOGGER.error("Invalid resolution specified: %s", resolution)
                 return None
 
+            _LOGGER.debug("Navigating to usage page: %s", usage_url)
             response = self.session.get(usage_url)
+            _LOGGER.debug("Usage page response status: %s", response.status_code)
+
             soup = BeautifulSoup(response.content, "html.parser")
 
             # Extract form tokens
@@ -137,6 +172,8 @@ class SFPUCScraper:
                     name = inp.get("name")
                     if name:
                         tokens[name] = inp.get("value", "")
+
+            _LOGGER.debug("Extracted %d form tokens", len(tokens))
 
             # Set download parameters
             tokens.update(
@@ -152,14 +189,21 @@ class SFPUCScraper:
 
             # POST to trigger download
             download_url = f"{self.base_url}/USE_{resolution.upper()}.aspx"
+            _LOGGER.debug("Triggering Excel download from: %s", download_url)
             response = self.session.post(
                 download_url, data=tokens, allow_redirects=True
+            )
+            _LOGGER.debug(
+                "Download response status: %s, URL: %s",
+                response.status_code,
+                response.url,
             )
 
             if "TRANSACTIONS_EXCEL_DOWNLOAD.aspx" in response.url:
                 # Parse the Excel data
                 content = response.content.decode("utf-8", errors="ignore")
                 lines = content.split("\n")
+                _LOGGER.debug("Downloaded content has %d lines", len(lines))
 
                 usage_data = []
                 for line in lines[1:]:  # Skip header
@@ -195,14 +239,24 @@ class SFPUCScraper:
                                         "resolution": resolution,
                                     }
                                 )
-                            except (ValueError, IndexError):
+                            except (ValueError, IndexError) as e:
+                                _LOGGER.debug(
+                                    "Failed to parse line: %s, error: %s",
+                                    line.strip(),
+                                    e,
+                                )
                                 continue
 
+                _LOGGER.info(
+                    "Successfully parsed %d %s data points", len(usage_data), resolution
+                )
                 return usage_data
             else:
+                _LOGGER.warning("Download failed - unexpected URL: %s", response.url)
                 return None
 
-        except Exception:
+        except Exception as e:
+            _LOGGER.error("Exception during data retrieval: %s", e)
             return None
 
     def get_daily_usage(self) -> float | None:
@@ -241,15 +295,22 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from SF PUC."""
         try:
+            self.logger.debug("Starting data update cycle")
+
             # Login (run in executor since it's blocking)
             loop = asyncio.get_event_loop()
+            self.logger.debug("Attempting SFPUC login")
             login_success = await loop.run_in_executor(None, self.scraper.login)
 
             if not login_success:
+                self.logger.error("Failed to login to SF PUC - aborting update")
                 raise UpdateFailed("Failed to login to SF PUC")
+
+            self.logger.debug("Login successful, proceeding with data fetch")
 
             # Fetch historical data on first run
             if not self._historical_data_fetched:
+                self.logger.debug("First run - fetching historical data")
                 await self._async_fetch_historical_data()
                 self._historical_data_fetched = True
 
@@ -258,28 +319,46 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             # Get current daily usage
             today = datetime.now()
+            self.logger.debug("Fetching current daily usage data for %s", today.date())
             daily_data = await loop.run_in_executor(
                 None, self.scraper.get_usage_data, today, today, "hourly"
             )
 
             if not daily_data:
+                self.logger.error("Failed to retrieve current usage data")
                 raise UpdateFailed("Failed to retrieve current usage data")
 
             # Sum hourly data for daily total
             daily_usage = sum(item["usage"] for item in daily_data)
+            self.logger.debug(
+                "Calculated daily usage: %.2f gallons from %d hourly readings",
+                daily_usage,
+                len(daily_data),
+            )
 
             # Get latest hourly usage (most recent hour)
             hourly_usage = daily_data[-1]["usage"] if daily_data else 0
+            self.logger.debug("Latest hourly usage: %.2f gallons", hourly_usage)
 
             # Get current monthly usage (sum of daily data this month)
             start_of_month = today.replace(
                 day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+            self.logger.debug(
+                "Fetching monthly usage data from %s to %s",
+                start_of_month.date(),
+                today.date(),
             )
             monthly_data = await loop.run_in_executor(
                 None, self.scraper.get_usage_data, start_of_month, today, "daily"
             )
             monthly_usage = (
                 sum(item["usage"] for item in monthly_data) if monthly_data else 0
+            )
+            self.logger.debug(
+                "Calculated monthly usage: %.2f gallons from %d daily readings",
+                monthly_usage,
+                len(monthly_data) if monthly_data else 0,
             )
 
             data = {
@@ -290,11 +369,19 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             }
 
             # Insert current statistics
+            self.logger.debug("Inserting current statistics")
             await self._async_insert_statistics(daily_data)
 
+            self.logger.info(
+                "Data update completed successfully - Daily: %.2f, Hourly: %.2f, Monthly: %.2f",
+                daily_usage,
+                hourly_usage,
+                monthly_usage,
+            )
             return data
 
         except Exception as err:
+            self.logger.error("Error updating SF Water data: %s", err)
             raise UpdateFailed(f"Error updating SF Water data: {err}") from err
 
     async def _async_fetch_historical_data(self) -> None:
@@ -308,6 +395,11 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             start_date = end_date - timedelta(days=730)  # 2 years
 
             loop = asyncio.get_event_loop()
+            self.logger.debug(
+                "Fetching monthly data from %s to %s",
+                start_date.date(),
+                end_date.date(),
+            )
 
             # Fetch monthly data
             monthly_data = await loop.run_in_executor(
@@ -316,24 +408,36 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if monthly_data:
                 await self._async_insert_statistics(monthly_data)
                 self.logger.info("Fetched %d monthly data points", len(monthly_data))
+            else:
+                self.logger.warning("No monthly data retrieved")
 
             # Fetch daily data for the past 90 days (more detailed recent data)
             start_date = end_date - timedelta(days=90)
+            self.logger.debug(
+                "Fetching daily data from %s to %s", start_date.date(), end_date.date()
+            )
             daily_data = await loop.run_in_executor(
                 None, self.scraper.get_usage_data, start_date, end_date, "daily"
             )
             if daily_data:
                 await self._async_insert_statistics(daily_data)
                 self.logger.info("Fetched %d daily data points", len(daily_data))
+            else:
+                self.logger.warning("No daily data retrieved")
 
             # Fetch hourly data for the past 30 days (most detailed recent data)
             start_date = end_date - timedelta(days=30)
+            self.logger.debug(
+                "Fetching hourly data from %s to %s", start_date.date(), end_date.date()
+            )
             hourly_data = await loop.run_in_executor(
                 None, self.scraper.get_usage_data, start_date, end_date, "hourly"
             )
             if hourly_data:
                 await self._async_insert_statistics(hourly_data)
                 self.logger.info("Fetched %d hourly data points", len(hourly_data))
+            else:
+                self.logger.warning("No hourly data retrieved")
 
         except Exception as err:
             self.logger.warning("Failed to fetch historical data: %s", err)
@@ -385,12 +489,20 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             if isinstance(usage_data, (int, float)):
                 # Legacy format: single daily usage value
+                self.logger.debug(
+                    "Inserting legacy statistics format: %.2f", usage_data
+                )
                 await self._async_insert_legacy_statistics(usage_data)
                 return
 
             # New format: list of data points
             if not usage_data:
+                self.logger.debug("No usage data to insert")
                 return
+
+            self.logger.debug(
+                "Processing %d data points for statistics insertion", len(usage_data)
+            )
 
             # Group data by resolution
             hourly_data = []
@@ -405,6 +517,13 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     daily_data.append(item)
                 elif resolution == "monthly":
                     monthly_data.append(item)
+
+            self.logger.debug(
+                "Grouped data - Hourly: %d, Daily: %d, Monthly: %d",
+                len(hourly_data),
+                len(daily_data),
+                len(monthly_data),
+            )
 
             # Insert statistics for each resolution
             if hourly_data:
@@ -422,6 +541,10 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     ) -> None:
         """Insert statistics for a specific resolution."""
         try:
+            self.logger.debug(
+                "Inserting %d %s statistics", len(data_points), resolution
+            )
+
             # Create statistic metadata based on resolution
             if resolution == "hourly":
                 stat_id = f"{DOMAIN}:hourly_usage"
@@ -439,6 +562,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 has_sum = True
                 unit_class = "volume"
             else:
+                self.logger.error("Unknown resolution for statistics: %s", resolution)
                 return
 
             metadata = StatisticMetaData(
@@ -479,7 +603,11 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
 
             # Insert statistics into Home Assistant recorder
+            self.logger.debug(
+                "Adding %d %s statistics to recorder", len(statistic_data), resolution
+            )
             async_add_external_statistics(self.hass, metadata, statistic_data)
+            self.logger.debug("Successfully inserted %s statistics", resolution)
 
         except Exception as err:
             self.logger.warning("Failed to insert %s statistics: %s", resolution, err)

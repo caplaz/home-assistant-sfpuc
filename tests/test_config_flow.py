@@ -3,10 +3,7 @@
 from homeassistant.data_entry_flow import FlowResultType
 import pytest
 
-from custom_components.sf_water.config_flow import (
-    SFWaterConfigFlow,
-    SFWaterOptionsFlowHandler,
-)
+from custom_components.sf_water.config_flow import ConfigFlowHandler, OptionsFlowHandler
 
 from .common import MockConfigEntry
 
@@ -23,7 +20,7 @@ class TestSFWaterConfigFlow:
     @pytest.mark.asyncio
     async def test_config_flow_user_step(self, hass):
         """Test the user step of the config flow."""
-        flow = SFWaterConfigFlow()
+        flow = ConfigFlowHandler()
         flow.hass = hass
 
         result = await flow.async_step_user()
@@ -37,8 +34,8 @@ class TestSFWaterConfigFlow:
         """Test getting the options flow."""
         config_entry = MockConfigEntry()
 
-        options_flow_class = SFWaterConfigFlow.async_get_options_flow(config_entry)
+        options_flow_class = ConfigFlowHandler.async_get_options_flow(config_entry)
         assert options_flow_class is not None
 
         # Test that it's the correct class
-        assert isinstance(options_flow_class, SFWaterOptionsFlowHandler)
+        assert isinstance(options_flow_class, OptionsFlowHandler)

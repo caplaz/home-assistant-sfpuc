@@ -1,7 +1,7 @@
 services:
   homeassistant:
     image: homeassistant/home-assistant:stable
-    container_name: ha-dev
+    container_name: ha-dev-sfpuc
     ports:
       - "8123:8123"
     volumes:

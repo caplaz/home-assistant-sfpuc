@@ -12,8 +12,8 @@ from homeassistant.components.recorder.models import (
     StatisticData,
     StatisticMetaData,
 )
+from homeassistant.components.recorder.models.statistics import StatisticMeanType
 from homeassistant.components.recorder.statistics import (
-    StatisticMeanType,
     async_add_external_statistics,
 )
 from homeassistant.config_entries import ConfigEntry

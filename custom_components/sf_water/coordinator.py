@@ -13,6 +13,7 @@ from homeassistant.components.recorder.models import (
     StatisticMetaData,
 )
 from homeassistant.components.recorder.statistics import async_add_external_statistics
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -20,8 +21,6 @@ from homeassistant.util import dt as dt_util
 import requests
 
 from .const import CONF_PASSWORD, CONF_UPDATE_INTERVAL, CONF_USERNAME, DOMAIN
-
-SFWaterConfigEntry = Any  # TODO: Import from config_entries when available
 
 
 class SFPUCScraper:
@@ -159,7 +158,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(
         self,
         hass: HomeAssistant,
-        config_entry: SFWaterConfigEntry,
+        config_entry: ConfigEntry[Any],
     ) -> None:
         """Initialize coordinator."""
         super().__init__(

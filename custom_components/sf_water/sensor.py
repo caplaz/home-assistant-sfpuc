@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date
 import logging
-from typing import Any
+from typing import Any, cast
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
@@ -22,7 +23,7 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import SFWaterConfigEntry, SFWaterCoordinator
+from .coordinator import SFWaterCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,13 +66,11 @@ class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self.entity_description = description
-        assert (
-            coordinator.config_entry is not None
-        )  # Coordinator always has config_entry
-        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_{description.key}"
+        config_entry = cast(ConfigEntry[Any], coordinator.config_entry)
+        self._attr_unique_id = f"{config_entry.entry_id}_{description.key}"
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, coordinator.config_entry.entry_id)},
+            identifiers={(DOMAIN, config_entry.entry_id)},
             manufacturer="SFPUC",
             model="Water Usage",
             name="SF Water",
@@ -85,7 +84,7 @@ class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: SFWaterConfigEntry,
+    config_entry: ConfigEntry[Any],
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up SF Water sensors."""

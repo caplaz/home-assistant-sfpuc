@@ -151,8 +151,8 @@ jobs:
       - name: Run tests
         run: |
           export PYTHONPATH="${PYTHONPATH}:${PWD}"
-          # Run validation tests (config flow tests require complex HA setup)
-          python -m pytest tests/test_validation.py -v --tb=short
+          # Run all tests
+          python -m pytest tests/ -v --tb=short
         env:
           PYTHONPATH: ${{ github.workspace }}
         if: always()

@@ -222,4 +222,4 @@ logger:
 
 ### Testing with Mock Data
 
-For development without real SFPUC access, modify the scraper to use mock data.
+For development without real SFPUC access, modify the SFPUCScraper class in `coordinator.py` to use mock data.

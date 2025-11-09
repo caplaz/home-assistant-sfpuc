@@ -37,5 +37,12 @@
     "error": {
       "unknown": "❌ Ocurrió un error inesperado al actualizar la configuración."
     }
+  },
+  "entity": {
+    "sensor": {
+      "daily_usage": {
+        "name": "Uso diario de agua"
+      }
+    }
   }
 }

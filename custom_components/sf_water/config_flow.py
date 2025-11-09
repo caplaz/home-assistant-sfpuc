@@ -25,7 +25,7 @@ class SFWaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 # Validate credentials by attempting login
-                from .sensor import SFPUCScraper
+                from .coordinator import SFPUCScraper
                 scraper = SFPUCScraper(user_input[CONF_USERNAME], user_input[CONF_PASSWORD])
                 if scraper.login():
                     return self.async_create_entry(

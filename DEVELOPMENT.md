@@ -111,7 +111,7 @@ custom_components/sf_water/
 ├── translations/            # Localized strings
 │   ├── en.json             # English translations
 │   └── es.json             # Spanish translations
-└── sfpuc.py                # SFPUC scraper implementation
+├── coordinator.py           # Data coordinator with SFPUC scraper implementation
 ```
 
 ### Testing with Real Data
@@ -127,7 +127,7 @@ For testing with real SFPUC data:
 
 For development without real SFPUC access:
 
-1. Modify `sfpuc.py` to return mock data
+1. Modify `coordinator.py` SFPUCScraper class to return mock data
 2. Comment out real login/download code
 3. Use static test data for development
 4. Test UI and data flow without external dependencies
@@ -203,11 +203,13 @@ docker-compose up -d
 ### Integration Issues
 
 1. **Restart Home Assistant**:
+
    ```bash
    docker-compose restart homeassistant
    ```
 
 2. **Check logs**:
+
    ```bash
    docker-compose logs homeassistant
    ```

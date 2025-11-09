@@ -7,13 +7,13 @@ from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 import voluptuous as vol
 
-from .const import CONF_PASSWORD, CONF_USERNAME
+from .const import CONF_PASSWORD, CONF_USERNAME, DOMAIN
 from .coordinator import SFPUCScraper
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class ConfigFlowHandler(ConfigFlow):
+class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for SF Water."""
 
     VERSION = 1

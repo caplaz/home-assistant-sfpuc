@@ -8,6 +8,9 @@ import logging
 from typing import Any
 
 from bs4 import BeautifulSoup
+from homeassistant.components.recorder import (
+    DATA_INSTANCE,
+)
 from homeassistant.components.recorder.models import (
     StatisticData,
     StatisticMeanType,
@@ -687,12 +690,10 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 stat_id = f"{DOMAIN}:hourly_usage"
                 name = "SF Water Hourly Usage"
                 has_sum = True
-                unit_class = "volume"
             elif resolution == "daily":
                 stat_id = f"{DOMAIN}:daily_usage"
                 name = "SF Water Daily Usage"
                 has_sum = True
-                unit_class = "volume"
             # Monthly statistics disabled - SFPUC billing cycles don't align with calendar months
             else:
                 self.logger.error("Unknown resolution for statistics: %s", resolution)
@@ -705,7 +706,6 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 name=name,
                 source=DOMAIN,
                 statistic_id=stat_id,
-                unit_class=unit_class,
                 unit_of_measurement=UnitOfVolume.GALLONS,
             )
 
@@ -745,6 +745,15 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self.logger.debug(
                 "Adding %d %s statistics to recorder", len(statistic_data), resolution
             )
+
+            # Check if recorder is available before inserting statistics
+            if DATA_INSTANCE not in self.hass.data:
+                self.logger.warning(
+                    "Recorder not available, skipping %s statistics insertion",
+                    resolution,
+                )
+                return
+
             async_add_external_statistics(self.hass, metadata, statistic_data)
             self.logger.debug("Successfully inserted %s statistics", resolution)
 
@@ -762,7 +771,6 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 name="SF Water Daily Usage",
                 source=DOMAIN,
                 statistic_id=f"{DOMAIN}:daily_usage",
-                unit_class="volume",
                 unit_of_measurement=UnitOfVolume.GALLONS,
             )
 
@@ -780,6 +788,14 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ]
 
             # Insert statistics into Home Assistant recorder
+
+            # Check if recorder is available before inserting statistics
+            if DATA_INSTANCE not in self.hass.data:
+                self.logger.warning(
+                    "Recorder not available, skipping legacy statistics insertion"
+                )
+                return
+
             async_add_external_statistics(self.hass, metadata, statistic_data)
 
         except Exception as err:

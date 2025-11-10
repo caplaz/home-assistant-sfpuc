@@ -20,6 +20,10 @@ logger:
 # Frontend configuration
 frontend:
 
+# Recorder configuration for statistics
+recorder:
+  purge_keep_days: 365
+
 # HTTP configuration
 http:
   server_host: 0.0.0.0

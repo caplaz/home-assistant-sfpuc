@@ -50,9 +50,15 @@ def mock_coordinator(hass, config_entry, mock_scraper):
 @pytest.fixture(autouse=True)
 def setup_hass_data(hass):
     """Set up Home Assistant data structure for the integration."""
+    from homeassistant.components.recorder import DATA_INSTANCE
+
     from custom_components.sf_water.const import DOMAIN
 
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
     if "logger" not in hass.data[DOMAIN]:
         hass.data[DOMAIN]["logger"] = Mock()
+
+    # Mock recorder instance availability for statistics insertion
+    if DATA_INSTANCE not in hass.data:
+        hass.data[DATA_INSTANCE] = Mock()

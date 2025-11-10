@@ -713,6 +713,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 name=name,
                 source=DOMAIN,
                 statistic_id=stat_id,
+                unit_class=None,
                 unit_of_measurement=UnitOfVolume.GALLONS,
             )
 
@@ -778,6 +779,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 name="SF Water Daily Usage",
                 source=DOMAIN,
                 statistic_id=f"{DOMAIN}:daily_usage",
+                unit_class=None,
                 unit_of_measurement=UnitOfVolume.GALLONS,
             )
 

@@ -1,5 +1,5 @@
 # Home Assistant Development Configuration
-# This configuration is for testing the SF Water integration
+# This configuration is for testing the San Francisco Water Power Sewer integration
 
 # Basic Home Assistant configuration
 homeassistant:
@@ -32,5 +32,5 @@ http:
   trusted_proxies:
     - 127.0.0.1
     - ::1
-# Note: The SF Water integration is added through the UI
-# Go to Settings → Devices & Services → Add Integration → SF Water
+# Note: The San Francisco Water Power Sewer integration is added through the UI
+# Go to Settings → Devices & Services → Add Integration → San Francisco Water Power Sewer

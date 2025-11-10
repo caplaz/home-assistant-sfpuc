@@ -1,4 +1,4 @@
-"""Tests for SF Water coordinator."""
+"""Tests for San Francisco Water Power Sewer coordinator."""
 
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
@@ -13,7 +13,7 @@ from .common import MockConfigEntry
 
 
 class TestSFWaterCoordinator:
-    """Test the SF Water coordinator functionality."""
+    """Test the San Francisco Water Power Sewer coordinator functionality."""
 
     @pytest.fixture(autouse=True)
     def setup_method(self, hass):

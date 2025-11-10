@@ -1,4 +1,4 @@
-"""SF Water integration for Home Assistant.
+"""San Francisco Water Power Sewer integration for Home Assistant.
 
 This integration connects to SFPUC (San Francisco Public Utilities Commission)
 to monitor water usage data from your account.
@@ -28,8 +28,8 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up SF Water from a config entry."""
-    _LOGGER.info("Setting up SF Water integration")
+    """Set up San Francisco Water Power Sewer from a config entry."""
+    _LOGGER.info("Setting up San Francisco Water Power Sewer integration")
     _LOGGER.debug(
         "Config entry data: %s",
         {
@@ -52,7 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up platforms
     _LOGGER.debug("Forwarding setup to sensor platform")
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    _LOGGER.info("SF Water integration setup completed")
+    _LOGGER.info("San Francisco Water Power Sewer integration setup completed")
 
     return True
 

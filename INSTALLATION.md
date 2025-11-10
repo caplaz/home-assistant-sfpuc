@@ -1,6 +1,6 @@
-# Installation Guide - SF Water
+# Installation Guide - San Francisco Water Power Sewer
 
-This guide provides detailed step-by-step instructions for installing and configuring the SF Water integration in Home Assistant.
+This guide provides detailed step-by-step instructions for installing and configuring the San Francisco Water Power Sewer integration in Home Assistant.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ HACS (Home Assistant Community Store) is the easiest and most reliable way to in
 
 3. **Search and Install**:
 
-   - Use the search box to find "SF Water"
+   - Use the search box to find "San Francisco Water Power Sewer"
    - Click on the integration when it appears
    - Click "Download" button
    - Select "Download" in the confirmation dialog
@@ -128,10 +128,10 @@ chmod 755 /config/custom_components/sfpuc/
    - Go to **Settings** → **Devices & Services**
    - Click **"Add Integration"** button
 
-2. **Find SF Water**:
+2. **Find San Francisco Water Power Sewer**:
 
-   - Type "SF Water" in the search box
-   - Click on "SF Water" when it appears
+   - Type "San Francisco Water Power Sewer" in the search box
+   - Click on "San Francisco Water Power Sewer" when it appears
 
 3. **Enter Credentials**:
 
@@ -149,7 +149,7 @@ chmod 755 /config/custom_components/sfpuc/
 After initial setup, you can modify settings:
 
 1. Go to **Settings** → **Devices & Services**
-2. Find "SF Water" in your integrations list
+2. Find "San Francisco Water Power Sewer" in your integrations list
 3. Click **"Configure"** to change the update interval
 
 ## Verification
@@ -159,14 +159,14 @@ After initial setup, you can modify settings:
 After restart, verify the integration is loaded:
 
 1. Go to **Settings** → **Devices & Services**
-2. Look for "SF Water" in the integrations list
+2. Look for "San Francisco Water Power Sewer" in the integrations list
 3. Status should show "Configured" with 1 device
 
 ### Check Sensors
 
 The integration creates one sensor:
 
-- **SF Water Daily Usage** (`sensor.sfpuc_daily_usage`)
+- **San Francisco Water Power Sewer Daily Usage** (`sensor.sfpuc_daily_usage`)
   - Should show current daily usage in gallons
   - Device class: water
   - State class: total_increasing
@@ -192,7 +192,7 @@ logger:
 
 #### Integration Not Appearing
 
-**Symptoms**: SF Water doesn't show up in the integrations list
+**Symptoms**: San Francisco Water Power Sewer doesn't show up in the integrations list
 
 **Solutions**:
 
@@ -260,7 +260,7 @@ logger:
 If installed via HACS:
 
 1. Go to HACS → Integrations
-2. Find "SF Water"
+2. Find "San Francisco Water Power Sewer"
 3. Click "Update" if available
 4. Restart Home Assistant
 
@@ -277,7 +277,7 @@ For manual installations:
 To remove the integration:
 
 1. Go to **Settings** → **Devices & Services**
-2. Find "SF Water" and click it
+2. Find "San Francisco Water Power Sewer" and click it
 3. Click **"Delete"** at the bottom
 4. Confirm deletion
 5. Remove the files: `rm -rf /config/custom_components/sfpuc/`

@@ -1,4 +1,4 @@
-"""Tests for SF Water sensors."""
+"""Tests for San Francisco Water Power Sewer sensors."""
 
 from unittest.mock import Mock
 
@@ -14,7 +14,7 @@ from .common import MockConfigEntry
 
 
 class TestSFWaterSensor:
-    """Test the SF Water sensor functionality."""
+    """Test the San Francisco Water Power Sewer sensor functionality."""
 
     def setup_method(self):
         """Set up test fixtures."""
@@ -43,7 +43,7 @@ class TestSFWaterSensor:
         }
         assert sensor._attr_device_info["manufacturer"] == "SFPUC"
         assert sensor._attr_device_info["model"] == "Water Usage"
-        assert sensor._attr_device_info["name"] == "SF Water"
+        assert sensor._attr_device_info["name"] == "San Francisco Water Power Sewer"
 
     def test_daily_usage_sensor_properties(self):
         """Test daily usage sensor properties."""

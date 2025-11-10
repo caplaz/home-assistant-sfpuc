@@ -34,7 +34,7 @@ If you discover a security vulnerability in this Home Assistant integration, ple
 
 ### Overview
 
-The SF Water integration implements industry-standard security practices for handling sensitive SFPUC account credentials. All credential storage and transmission follows Home Assistant best practices and security guidelines.
+The San Francisco Water Power Sewer integration implements industry-standard security practices for handling sensitive SFPUC account credentials. All credential storage and transmission follows Home Assistant best practices and security guidelines.
 
 ### Storage Security
 

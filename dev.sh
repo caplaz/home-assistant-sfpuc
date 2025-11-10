@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# SF Water Development Helper Script
+# San Francisco Water Power Sewer Development Helper Script
 
 set -e
 
@@ -114,7 +114,7 @@ clean() {
 # Show help
 help() {
     cat << EOF
-SF Water Development Helper
+San Francisco Water Power Sewer Development Helper
 
 USAGE:
     ./dev.sh [COMMAND]

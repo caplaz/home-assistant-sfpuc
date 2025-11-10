@@ -1,4 +1,4 @@
-"""Coordinator for SF Water integration."""
+"""Coordinator for San Francisco Water Power Sewer integration."""
 
 from __future__ import annotations
 
@@ -415,7 +415,7 @@ class SFPUCScraper:
 
 
 class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """SF Water data update coordinator."""
+    """San Francisco Water Power Sewer data update coordinator."""
 
     def __init__(
         self,
@@ -533,8 +533,12 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return data
 
         except Exception as err:
-            self.logger.error("Error updating SF Water data: %s", err)
-            raise UpdateFailed(f"Error updating SF Water data: {err}") from err
+            self.logger.error(
+                "Error updating San Francisco Water Power Sewer data: %s", err
+            )
+            raise UpdateFailed(
+                f"Error updating San Francisco Water Power Sewer data: {err}"
+            ) from err
 
     async def _async_fetch_historical_data(self) -> None:
         """Fetch historical data going back months/years on first run."""
@@ -695,11 +699,11 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Create statistic metadata based on resolution
             if resolution == "hourly":
                 stat_id = f"{DOMAIN}:hourly_usage"
-                name = "SF Water Hourly Usage"
+                name = "San Francisco Water Power Sewer Hourly Usage"
                 has_sum = True
             elif resolution == "daily":
                 stat_id = f"{DOMAIN}:daily_usage"
-                name = "SF Water Daily Usage"
+                name = "San Francisco Water Power Sewer Daily Usage"
                 has_sum = True
             # Monthly statistics disabled - SFPUC billing cycles don't align with calendar months
             else:
@@ -775,7 +779,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 has_mean=False,
                 has_sum=True,
                 mean_type=StatisticMeanType.NONE,
-                name="SF Water Daily Usage",
+                name="San Francisco Water Power Sewer Daily Usage",
                 source=DOMAIN,
                 statistic_id=f"{DOMAIN}:daily_usage",
                 unit_of_measurement=UnitOfVolume.GALLONS,

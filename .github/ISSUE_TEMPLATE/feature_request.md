@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for SF Water
+about: Suggest an idea for San Francisco Water Power Sewer
 title: "[FEATURE] "
 labels: ["enhancement"]
 assignees: ""

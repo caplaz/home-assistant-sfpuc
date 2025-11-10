@@ -1,11 +1,11 @@
 {
   "domain": "sfpuc",
-  "name": "SF Water",
+  "name": "San Francisco Water Power Sewer",
   "codeowners": ["@caplaz"],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/caplaz/hass-sfpuc",
-  "integration_type": "integration",
+  "integration_type": "device",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/caplaz/hass-sfpuc/issues",
   "loggers": ["custom_components.sfpuc"],

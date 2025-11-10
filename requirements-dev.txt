@@ -1,4 +1,4 @@
-# Development requirements for SF Water
+# Development requirements for San Francisco Water Power Sewer
 homeassistant>=2023.1.0
 requests>=2.25.1
 beautifulsoup4>=4.9.3

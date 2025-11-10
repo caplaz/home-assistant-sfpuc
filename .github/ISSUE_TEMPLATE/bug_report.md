@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve SF Water
+about: Create a report to help us improve San Francisco Water Power Sewer
 title: "[BUG] "
 labels: ["bug"]
 assignees: ""
@@ -13,7 +13,7 @@ A clear and concise description of what the bug is.
 ## Environment
 
 - **Home Assistant Version**: [e.g. 2024.1.0]
-- **SF Water Version**: [e.g. 1.0.0]
+- **San Francisco Water Power Sewer Version**: [e.g. 1.0.0]
 - **Python Version**: [e.g. 3.11]
 
 ## Configuration

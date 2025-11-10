@@ -1,4 +1,4 @@
-"""Tests for SF Water constants and configuration."""
+"""Tests for San Francisco Water Power Sewer constants and configuration."""
 
 import json
 from pathlib import Path

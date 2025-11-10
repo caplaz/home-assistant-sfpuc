@@ -1,4 +1,4 @@
-"""Tests for SF Water integration."""
+"""Tests for San Francisco Water Power Sewer integration."""
 
 from datetime import datetime
 from unittest.mock import Mock, patch

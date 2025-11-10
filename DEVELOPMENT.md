@@ -1,6 +1,6 @@
-# SF Water - Development Setup
+# San Francisco Water Power Sewer - Development Setup
 
-This directory contains a Docker-based development environment for testing the SF Water Home Assistant integration.
+This directory contains a Docker-based development environment for testing the San Francisco Water Power Sewer Home Assistant integration.
 
 ## Prerequisites
 
@@ -53,27 +53,27 @@ This directory contains a Docker-based development environment for testing the S
 
 1. In Home Assistant, go to **Settings** → **Devices & Services**
 2. Click **Add Integration**
-3. Search for "SF Water" in the integration list
-4. Click on "SF Water" and follow the setup wizard
+3. Search for "San Francisco Water Power Sewer" in the integration list
+4. Click on "San Francisco Water Power Sewer" and follow the setup wizard
 5. Enter your SFPUC credentials when prompted
 
 #### Checking Integration Status
 
 - Go to **Settings** → **Devices & Services**
-- Find "SF Water" in the list
+- Find "San Francisco Water Power Sewer" in the list
 - Click on it to see sensor status and configuration
 
 #### Viewing Sensor Data
 
 - Go to **Settings** → **Dashboards**
 - Create a new dashboard or edit existing one
-- Add a sensor card for "SF Water Daily Usage"
+- Add a sensor card for "San Francisco Water Power Sewer Daily Usage"
 
 ### Development Environment Features
 
 The development environment includes sample sensors that provide realistic water usage data:
 
-- **SF Water Daily Usage**: Shows current day's water consumption in gallons
+- **San Francisco Water Power Sewer Daily Usage**: Shows current day's water consumption in gallons
 - **Historical Data**: Simulated historical usage data for testing trends
 - **Real-time Updates**: Data updates every 5 minutes for development testing
 

@@ -1,4 +1,4 @@
-# SF Water for Home Assistant
+# San Francisco Water Power Sewer for Home Assistant
 
 [![hacs][hacsbadge]][hacs]
 [![GitHub Release][releases-shield]][releases]
@@ -8,13 +8,13 @@
 
 A Home Assistant custom integration for monitoring San Francisco water usage from SFPUC (San Francisco Public Utilities Commission). This integration connects to your SFPUC account to fetch historical water usage data and provides it as sensors in Home Assistant.
 
-![SF Water][logo]
+![San Francisco Water Power Sewer][logo]
 
 ## How It Works
 
 ### Data Flow Overview
 
-The SF Water integration provides comprehensive historical utility data for the Home Assistant Energy dashboard, with multiple data resolutions.
+The San Francisco Water Power Sewer integration provides comprehensive historical utility data for the Home Assistant Energy dashboard, with multiple data resolutions.
 
 ```
 SFPUC Portal → Integration → Home Assistant → Energy Dashboard
@@ -95,7 +95,7 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 1. **Open HACS**: Go to HACS in your Home Assistant sidebar
 2. **Navigate to Integrations**: Click on "Integrations"
 3. **Search and Install**:
-   - Search for "SF Water" in HACS
+   - Search for "San Francisco Water Power Sewer" in HACS
    - Click on it and select "Download"
    - Choose the latest version
 4. **Restart Home Assistant**: Required for the integration to load
@@ -131,8 +131,8 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 ### Initial Setup
 
 1. **Add Integration**: Go to Settings → Devices & Services → Add Integration
-2. **Search**: Type "SF Water" in the search box
-3. **Select**: Click on "SF Water" from the results
+2. **Search**: Type "San Francisco Water Power Sewer" in the search box
+3. **Select**: Click on "San Francisco Water Power Sewer" from the results
 4. **Configure**:
    - **SFPUC Username**: Your SFPUC account username (typically account number or email)
    - **SFPUC Password**: Your SFPUC portal password
@@ -144,7 +144,7 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 
 The integration creates multiple sensors for different time resolutions:
 
-- **SF Water Daily Usage** (`sensor.sfpuc_daily_usage`)
+- **San Francisco Water Power Sewer Daily Usage** (`sensor.sfpuc_daily_usage`)
 
   - **State**: Daily water usage in gallons
   - **Device Class**: `water`
@@ -152,7 +152,7 @@ The integration creates multiple sensors for different time resolutions:
   - **Unit**: `gal` (gallons)
   - **Update**: Every 12 hours
 
-- **SF Water Hourly Usage** (`sensor.sfpuc_hourly_usage`)
+- **San Francisco Water Power Sewer Hourly Usage** (`sensor.sfpuc_hourly_usage`)
 
   - **State**: Most recent hourly water usage in gallons
   - **Device Class**: `water`
@@ -160,7 +160,7 @@ The integration creates multiple sensors for different time resolutions:
   - **Unit**: `gal` (gallons)
   - **Update**: Every 12 hours
 
-- **SF Water Monthly Usage** (`sensor.sfpuc_monthly_usage`)
+- **San Francisco Water Power Sewer Monthly Usage** (`sensor.sfpuc_monthly_usage`)
   - **State**: Current month-to-date water usage in gallons
   - **Device Class**: `water`
   - **State Class**: `total_increasing`

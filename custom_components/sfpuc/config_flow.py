@@ -1,4 +1,4 @@
-"""Config flow for SF Water integration."""
+"""Config flow for San Francisco Water Power Sewer integration."""
 
 import asyncio
 import logging
@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for SF Water."""
+    """Handle a config flow for San Francisco Water Power Sewer."""
 
     VERSION = 1
 
@@ -45,7 +45,7 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                         user_input[CONF_USERNAME][:3] + "***",
                     )
                     return self.async_create_entry(
-                        title="SF Water",
+                        title="San Francisco Water Power Sewer",
                         data={
                             CONF_USERNAME: user_input[CONF_USERNAME],
                             CONF_PASSWORD: user_input[CONF_PASSWORD],
@@ -81,9 +81,11 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle options flow for SF Water."""
+    """Handle options flow for San Francisco Water Power Sewer."""
 
-    async def async_step_init(self, user_input=None):
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
             # Validate new credentials

@@ -1,4 +1,4 @@
-"""Tests for SF Water integration initialization."""
+"""Tests for San Francisco Water Power Sewer integration initialization."""
 
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -10,7 +10,7 @@ from .common import MockConfigEntry
 
 
 class TestSFWaterIntegration:
-    """Test the SF Water integration setup and teardown."""
+    """Test the San Francisco Water Power Sewer integration setup and teardown."""
 
     @pytest.fixture(autouse=True)
     def setup_method(self, hass):

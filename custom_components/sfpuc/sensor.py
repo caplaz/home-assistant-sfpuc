@@ -1,4 +1,4 @@
-"""Sensor entities for SF Water integration."""
+"""Sensor entities for San Francisco Water Power Sewer integration."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ PARALLEL_UPDATES = 0
 
 @dataclass(frozen=True, kw_only=True)
 class SFWaterEntityDescription(SensorEntityDescription):
-    """Class describing SF Water sensors entities."""
+    """Class describing San Francisco Water Power Sewer sensors entities."""
 
     value_fn: Callable[[dict[str, Any]], StateType | date]
 
@@ -71,7 +71,7 @@ WATER_SENSORS: tuple[SFWaterEntityDescription, ...] = (
 
 
 class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
-    """SF Water sensor entity."""
+    """San Francisco Water Power Sewer sensor entity."""
 
     entity_description: SFWaterEntityDescription
 
@@ -90,7 +90,7 @@ class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
             identifiers={(DOMAIN, config_entry.entry_id)},
             manufacturer="SFPUC",
             model="Water Usage",
-            name="SF Water",
+            name="San Francisco Water Power Sewer",
         )
 
     @property
@@ -104,7 +104,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry[Any],
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up SF Water sensors."""
+    """Set up San Francisco Water Power Sewer sensors."""
     coordinator = config_entry.runtime_data
 
     async_add_entities(

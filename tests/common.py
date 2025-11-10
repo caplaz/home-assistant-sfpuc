@@ -1,4 +1,4 @@
-"""Common test utilities for SF Water integration."""
+"""Common test utilities for San Francisco Water Power Sewer integration."""
 
 from typing import Any
 from unittest.mock import Mock
@@ -16,7 +16,7 @@ class MockConfigEntry:
         entry_id: str = "test_entry",
         data: dict[str, Any] | None = None,
         options: dict[str, Any] | None = None,
-        title: str = "SF Water",
+        title: str = "San Francisco Water Power Sewer",
         version: int = 1,
         domain: str = DOMAIN,
     ):

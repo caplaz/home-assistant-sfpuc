@@ -22,8 +22,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "SF Water Configuration",
-        "description": "SF Water integration uses automatic settings optimized for daily water usage data. Updates occur every 12 hours to stay current with SFPUC data while respecting server resources.\n\n**Current Settings:**\n• Update interval: Fixed at 12 hours\n• Data source: SFPUC daily usage\n• Storage: Local Home Assistant database\n\nNo configuration changes are needed."
+        "title": "San Francisco Water Power Sewer Configuration",
+        "description": "San Francisco Water Power Sewer integration uses automatic settings optimized for daily water usage data. Updates occur every 12 hours to stay current with SFPUC data while respecting server resources.\n\n**Current Settings:**\n• Update interval: Fixed at 12 hours\n• Data source: SFPUC daily usage\n• Storage: Local Home Assistant database\n\nNo configuration changes are needed."
       }
     }
   },

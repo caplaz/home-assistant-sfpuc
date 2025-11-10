@@ -1,4 +1,4 @@
-"""Tests for SF Water config flow."""
+"""Tests for San Francisco Water Power Sewer config flow."""
 
 from homeassistant.data_entry_flow import FlowResultType
 import pytest
@@ -9,7 +9,7 @@ from .common import MockConfigEntry
 
 
 class TestSFWaterConfigFlow:
-    """Test the SF Water config flow."""
+    """Test the San Francisco Water Power Sewer config flow."""
 
     @pytest.fixture(autouse=True)
     def setup_method(self, hass):

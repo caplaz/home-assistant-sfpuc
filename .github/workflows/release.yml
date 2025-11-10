@@ -82,7 +82,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.version.outputs.tag }}
-          name: SF Water ${{ steps.version.outputs.version }}
+          name: San Francisco Water Power Sewer ${{ steps.version.outputs.version }}
           bodyFile: ${{ steps.changelog.outputs.found_changelog == 'true' && 'current_changelog.md' || '' }}
           body: ${{ steps.changelog.outputs.found_changelog == 'false' && 'Release notes not available in CHANGELOG.md' || '' }}
           draft: false

@@ -1,4 +1,4 @@
-"""Constants for the SF Water integration."""
+"""Constants for the San Francisco Water Power Sewer integration."""
 
 DOMAIN = "sfpuc"
 

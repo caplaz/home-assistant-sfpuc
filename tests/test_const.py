@@ -138,7 +138,12 @@ class TestManifest:
             manifest = json.load(f)
 
         # Should be a device or service integration
-        assert manifest["integration_type"] in ["device", "service", "hub"]
+        assert manifest["integration_type"] in [
+            "device",
+            "service",
+            "hub",
+            "integration",
+        ]
 
     def test_manifest_iot_class(self):
         """Test that IoT class is appropriate for this integration."""

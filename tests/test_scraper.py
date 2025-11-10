@@ -21,6 +21,7 @@ class TestSFPUCScraper:
         """Test successful login."""
         # Mock the login page response
         login_page = Mock()
+        login_page.status_code = 200
         login_page.content = b"""
         <html>
             <form>
@@ -33,8 +34,9 @@ class TestSFPUCScraper:
 
         # Mock the login POST response
         login_response = Mock()
+        login_response.status_code = 200
         login_response.url = "https://myaccount-water.sfpuc.org/MY_ACCOUNT_RSF.aspx"
-        login_response.text = "Welcome"
+        login_response.text = "Welcome to your account"
         mock_post.return_value = login_response
 
         result = self.scraper.login()

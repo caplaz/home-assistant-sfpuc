@@ -32,10 +32,21 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SFPUCScraper:
-    """SF PUC water usage data scraper."""
+    """SF PUC water usage data scraper.
+
+    This class handles web scraping of water usage data from the SFPUC
+    (San Francisco Public Utilities Commission) online portal at
+    myaccount-water.sfpuc.org. It manages authentication, form submission,
+    and parsing of downloaded usage data in various resolutions.
+    """
 
     def __init__(self, username: str, password: str) -> None:
-        """Initialize the scraper."""
+        """Initialize the scraper.
+
+        Args:
+            username: SFPUC account username/account number.
+            password: SFPUC account password.
+        """
         self.username = username
         self.password = password
         self.session = requests.Session()
@@ -55,7 +66,16 @@ class SFPUCScraper:
         )
 
     def login(self) -> bool:
-        """Login to SFPUC account."""
+        """Authenticate with SFPUC portal.
+
+        Performs ASP.NET authentication with the SFPUC portal by:
+        1. Fetching the login page to extract ASP.NET view state and event validation tokens
+        2. Submitting credentials via POST with the extracted tokens
+        3. Analyzing response for success/failure indicators
+
+        Returns:
+            True if login was successful, False otherwise.
+        """
         try:
             _LOGGER.debug(
                 "Starting SFPUC login process for user: %s", self.username[:3] + "***"
@@ -405,7 +425,13 @@ class SFPUCScraper:
             return None
 
     def get_daily_usage(self) -> float | None:
-        """Get today's water usage in gallons (legacy method for backward compatibility)."""
+        """Get today's water usage in gallons (legacy method for backward compatibility).
+
+        Convenience method that aggregates hourly usage data for the current day.
+
+        Returns:
+            Total water usage for today in gallons, or None if data retrieval fails.
+        """
         today = datetime.now()
         data = self.get_usage_data(today, today, "hourly")
         if data:
@@ -415,14 +441,25 @@ class SFPUCScraper:
 
 
 class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """San Francisco Water Power Sewer data update coordinator."""
+    """San Francisco Water Power Sewer data update coordinator.
+
+    Manages periodic data fetching from SFPUC portal and caching via
+    DataUpdateCoordinator pattern. Handles statistics insertion into
+    Home Assistant's recorder component for historical tracking and
+    statistics card integration.
+    """
 
     def __init__(
         self,
         hass: HomeAssistant,
         config_entry: ConfigEntry[Any],
     ) -> None:
-        """Initialize coordinator."""
+        """Initialize coordinator.
+
+        Args:
+            hass: Home Assistant instance.
+            config_entry: The config entry for this integration.
+        """
         super().__init__(
             hass,
             logger=_LOGGER,
@@ -438,14 +475,38 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._historical_data_fetched = False
 
     def update_credentials(self, username: str, password: str) -> None:
-        """Update the scraper credentials."""
+        """Update the scraper credentials.
+
+        Args:
+            username: New SFPUC account username/account number.
+            password: New SFPUC account password.
+        """
         self.logger.info(
             "Updating SFPUC credentials for user: %s", username[:3] + "***"
         )
         self.scraper = SFPUCScraper(username, password)
 
     async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data from SF PUC."""
+        """Fetch data from SF PUC.
+
+        This method:
+        1. Authenticates with the SFPUC portal
+        2. Fetches historical data on first run
+        3. Performs data backfilling for the past 30 days
+        4. Retrieves current daily, hourly, and monthly usage
+        5. Inserts statistics into Home Assistant recorder
+        6. Returns current usage values for sensor entities
+
+        Returns:
+            Dictionary containing current usage data with keys:
+            - daily_usage: Total usage for the current day in gallons
+            - hourly_usage: Usage for the most recent hour in gallons
+            - monthly_usage: Total usage for the current month in gallons
+            - last_updated: Timestamp of the update
+
+        Raises:
+            UpdateFailed: If authentication fails or data retrieval encounters errors.
+        """
         try:
             self.logger.debug("Starting data update cycle")
 
@@ -541,7 +602,18 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ) from err
 
     async def _async_fetch_historical_data(self) -> None:
-        """Fetch historical data going back months/years on first run."""
+        """Fetch historical data going back months/years on first run.
+
+        Populates recorder statistics with:
+        - Daily usage data for the past 90 days
+        - Hourly usage data for the past 30 days
+
+        Note: Monthly billing cycle data is skipped as SFPUC billing cycles
+        do not align with calendar months (typically 25th-25th).
+
+        Logs warnings if data retrieval fails but does not raise exceptions
+        to avoid blocking the initial coordinator setup.
+        """
         try:
             self.logger.info("Fetching historical water usage data...")
 
@@ -595,7 +667,18 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self.logger.warning("Failed to fetch historical data: %s", err)
 
     async def _async_backfill_missing_data(self) -> None:
-        """Backfill missing data with 30-day lookback window."""
+        """Backfill missing data with 30-day lookback window.
+
+        Runs daily to ensure complete historical data in recorder by:
+        1. Checking for missing daily data in the past 30 days
+        2. Checking for missing hourly data in the past 7 days
+        3. Inserting any missing data points into statistics
+
+        Throttled to run at most once per 24 hours to avoid excessive
+        API calls to SFPUC portal.
+
+        Logs warnings if backfilling fails but does not raise exceptions.
+        """
         try:
             now = datetime.now()
 
@@ -637,7 +720,19 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_insert_statistics(
         self, usage_data: float | list[dict[str, Any]]
     ) -> None:
-        """Insert water usage statistics into Home Assistant."""
+        """Insert water usage statistics into Home Assistant.
+
+        Handles both legacy (float) and new (list) data formats.
+        Groups data points by resolution and delegates to appropriate
+        resolution-specific insertion methods.
+
+        Args:
+            usage_data: Either a float representing daily usage (legacy format)
+                       or a list of dictionaries containing 'timestamp', 'usage',
+                       and 'resolution' keys.
+
+        Logs warnings if insertion fails but does not raise exceptions.
+        """
         try:
             if isinstance(usage_data, (int, float)):
                 # Legacy format: single daily usage value
@@ -690,7 +785,20 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_insert_resolution_statistics(
         self, data_points: list[dict[str, Any]], resolution: str
     ) -> None:
-        """Insert statistics for a specific resolution."""
+        """Insert statistics for a specific resolution.
+
+        Creates StatisticMetaData and StatisticData objects and adds them
+        to Home Assistant's recorder component. Handles timezone conversion
+        for San Francisco (America/Los_Angeles).
+
+        Args:
+            data_points: List of dictionaries with 'timestamp' and 'usage' keys.
+                        Timestamps should be timezone-naive (assumed local to SF).
+            resolution: Data resolution - 'hourly' or 'daily'. Determines statistic ID
+                       and metadata.
+
+        Logs warnings if insertion fails but does not raise exceptions.
+        """
         try:
             self.logger.debug(
                 "Inserting %d %s statistics", len(data_points), resolution
@@ -772,7 +880,16 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self.logger.warning("Failed to insert %s statistics: %s", resolution, err)
 
     async def _async_insert_legacy_statistics(self, daily_usage: float) -> None:
-        """Insert legacy daily statistics (backward compatibility)."""
+        """Insert legacy daily statistics (backward compatibility).
+
+        Creates a single daily statistic data point for the current day.
+        Used when legacy data format (float) is provided to _async_insert_statistics.
+
+        Args:
+            daily_usage: Total water usage for the day in gallons.
+
+        Logs warnings if insertion fails but does not raise exceptions.
+        """
         try:
             # Create statistic metadata for daily water usage
             metadata = StatisticMetaData(  # type: ignore[typeddict-item]

@@ -15,14 +15,30 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for San Francisco Water Power Sewer."""
+    """Handle a config flow for San Francisco Water Power Sewer.
+
+    Manages the initial setup flow for adding the integration to Home Assistant.
+    Validates SFPUC account credentials by attempting login before creating the config entry.
+    """
 
     VERSION = 1
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step."""
+        """Handle the initial step.
+
+        Prompts user for SFPUC account username and password, validates them
+        by attempting login, and creates a config entry if successful.
+
+        Args:
+            user_input: Dictionary containing CONF_USERNAME and CONF_PASSWORD
+                       provided by the user. None on initial call.
+
+        Returns:
+            ConfigFlowResult containing either a form for user input or
+            a created config entry.
+        """
         errors = {}
 
         if user_input is not None:
@@ -76,17 +92,40 @@ class ConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
-        """Create the options flow."""
+        """Create the options flow.
+
+        Args:
+            config_entry: The config entry for which options are being managed.
+
+        Returns:
+            An OptionsFlowHandler instance for managing integration options.
+        """
         return OptionsFlowHandler()
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle options flow for San Francisco Water Power Sewer."""
+    """Handle options flow for San Francisco Water Power Sewer.
+
+    Manages credential updates after the integration has been added to Home Assistant.
+    Allows users to change their SFPUC account credentials.
+    """
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Manage the options."""
+        """Manage the options.
+
+        Prompts user for updated SFPUC credentials, validates them by
+        attempting login, and updates the config entry if successful.
+
+        Args:
+            user_input: Dictionary containing CONF_USERNAME and CONF_PASSWORD
+                       provided by the user. None on initial call.
+
+        Returns:
+            ConfigFlowResult containing either a form for user input or
+            a created options entry.
+        """
         if user_input is not None:
             # Validate new credentials
             errors = {}
@@ -141,7 +180,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     def _get_options_schema(self):
-        """Get the options schema."""
+        """Get the options schema.
+
+        Returns a Voluptuous schema for the options form, with the current
+        username pre-filled as the default value.
+
+        Returns:
+            Voluptuous Schema for credential input.
+        """
         current_username = self.config_entry.data.get(CONF_USERNAME, "")
 
         return vol.Schema(

@@ -28,7 +28,21 @@ PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up San Francisco Water Power Sewer from a config entry."""
+    """Set up San Francisco Water Power Sewer from a config entry.
+
+    Initializes the integration by:
+    1. Creating a SFWaterCoordinator for data management
+    2. Performing the first data refresh
+    3. Storing the coordinator in the config entry
+    4. Setting up the sensor platform
+
+    Args:
+        hass: Home Assistant instance.
+        entry: The config entry for this integration.
+
+    Returns:
+        True if setup was successful, False otherwise.
+    """
     _LOGGER.info("Setting up San Francisco Water Power Sewer integration")
     _LOGGER.debug(
         "Config entry data: %s",
@@ -58,5 +72,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
+    """Unload a config entry.
+
+    Cleans up the integration by unloading all platforms (sensor)
+    and removing the coordinator.
+
+    Args:
+        hass: Home Assistant instance.
+        entry: The config entry being unloaded.
+
+    Returns:
+        True if unload was successful, False otherwise.
+    """
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

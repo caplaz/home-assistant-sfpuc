@@ -32,7 +32,11 @@ PARALLEL_UPDATES = 0
 
 @dataclass(frozen=True, kw_only=True)
 class SFWaterEntityDescription(SensorEntityDescription):
-    """Class describing San Francisco Water Power Sewer sensors entities."""
+    """Class describing San Francisco Water Power Sewer sensors entities.
+
+    Extends SensorEntityDescription with a value_fn that extracts the
+    appropriate value from coordinator data for each sensor type.
+    """
 
     value_fn: Callable[[dict[str, Any]], StateType | date]
 
@@ -71,7 +75,11 @@ WATER_SENSORS: tuple[SFWaterEntityDescription, ...] = (
 
 
 class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
-    """San Francisco Water Power Sewer sensor entity."""
+    """San Francisco Water Power Sewer sensor entity.
+
+    Displays current water usage data fetched by the coordinator.
+    Creates separate entities for daily, hourly, and monthly usage.
+    """
 
     entity_description: SFWaterEntityDescription
 
@@ -80,7 +88,12 @@ class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
         coordinator: SFWaterCoordinator,
         description: SFWaterEntityDescription,
     ) -> None:
-        """Initialize the sensor."""
+        """Initialize the sensor.
+
+        Args:
+            coordinator: The data update coordinator instance.
+            description: The sensor entity description with value extraction function.
+        """
         super().__init__(coordinator)
         self.entity_description = description
         config_entry = cast(ConfigEntry[Any], coordinator.config_entry)
@@ -95,7 +108,14 @@ class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
 
     @property
     def native_value(self) -> StateType | date:
-        """Return the state of the sensor."""
+        """Return the state of the sensor.
+
+        Calls the value_fn from the entity description to extract the
+        appropriate value from coordinator data.
+
+        Returns:
+            The current state of the sensor (typically a float for usage in gallons).
+        """
         return self.entity_description.value_fn(self.coordinator.data)
 
 
@@ -104,7 +124,16 @@ async def async_setup_entry(
     config_entry: ConfigEntry[Any],
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up San Francisco Water Power Sewer sensors."""
+    """Set up San Francisco Water Power Sewer sensors.
+
+    Creates sensor entities for daily, hourly, and monthly water usage
+    from the coordinator and adds them to Home Assistant.
+
+    Args:
+        hass: Home Assistant instance.
+        config_entry: The config entry for this integration.
+        async_add_entities: Callback to register newly created entities.
+    """
     coordinator = config_entry.runtime_data
 
     async_add_entities(

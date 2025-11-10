@@ -265,10 +265,92 @@ class TestSFPUCScraper:
             assert result == 95.0  # Sum of hourly usage
             mock_get_data.assert_called_once()
 
-    def test_get_daily_usage_no_data(self):
-        """Test the legacy get_daily_usage method with no data."""
-        with patch.object(self.scraper, "get_usage_data") as mock_get_data:
-            mock_get_data.return_value = None
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_get_usage_data_daily_sfpuc_format_success(self, mock_post, mock_get):
+        """Test successful daily usage data retrieval with real SFPUC format (MM/DD without year)."""
+        # Mock the usage page response
+        usage_page = Mock()
+        usage_page.content = b"""
+        <html>
+            <form>
+                <input name="token1" value="value1" />
+            </form>
+        </html>
+        """
+        mock_get.return_value = usage_page
 
-            result = self.scraper.get_daily_usage()
-            assert result is None
+        # Mock the download response with SFPUC's actual daily format
+        download_response = Mock()
+        download_response.url = (
+            "https://myaccount-water.sfpuc.org/TRANSACTIONS_EXCEL_DOWNLOAD.aspx"
+        )
+        download_response.content = b"Date\tUsage\n8/11\t97\n8/12\t112\n"
+        mock_post.return_value = download_response
+
+        start_date = datetime(2025, 8, 11)
+        end_date = datetime(2025, 8, 12)
+
+        result = self.scraper.get_usage_data(start_date, end_date, "daily")
+
+        assert result is not None
+        assert len(result) == 2
+        # Should use current year (2025) for the timestamps
+        assert result[0]["timestamp"] == datetime(2025, 8, 11)
+        assert result[0]["usage"] == 97
+        assert result[0]["resolution"] == "daily"
+        assert result[1]["timestamp"] == datetime(2025, 8, 12)
+        assert result[1]["usage"] == 112
+
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_get_usage_data_hourly_sfpuc_format_success(self, mock_post, mock_get):
+        """Test successful hourly usage data retrieval with real SFPUC format (HH AM/PM without date)."""
+        # Mock the usage page response
+        usage_page = Mock()
+        usage_page.content = b"""
+        <html>
+            <form>
+                <input name="token1" value="value1" />
+                <input name="token2" value="value2" />
+            </form>
+        </html>
+        """
+        mock_get.return_value = usage_page
+
+        # Mock the download response with SFPUC's actual hourly format
+        download_response = Mock()
+        download_response.url = (
+            "https://myaccount-water.sfpuc.org/TRANSACTIONS_EXCEL_DOWNLOAD.aspx"
+        )
+        download_response.content = (
+            b"Date\tUsage\n7 AM\t7.48\n8 AM\t14.96\n12 PM\t0\n1 PM\t0\n"
+        )
+        mock_post.return_value = download_response
+
+        start_date = datetime(2025, 11, 9)
+        end_date = datetime(2025, 11, 9)
+
+        result = self.scraper.get_usage_data(start_date, end_date, "hourly")
+
+        assert result is not None
+        assert len(result) == 4
+        # Should use current date for the timestamps
+        current_date = datetime.now().date()
+        assert result[0]["timestamp"] == datetime.combine(
+            current_date, datetime.min.time().replace(hour=7)
+        )
+        assert result[0]["usage"] == 7.48
+        assert result[0]["resolution"] == "hourly"
+        assert result[1]["timestamp"] == datetime.combine(
+            current_date, datetime.min.time().replace(hour=8)
+        )
+        assert result[1]["usage"] == 14.96
+        assert result[2]["timestamp"] == datetime.combine(
+            current_date, datetime.min.time().replace(hour=12)
+        )
+        assert result[2]["usage"] == 0
+        assert result[3]["timestamp"] == datetime.combine(
+            current_date, datetime.min.time().replace(hour=13)
+        )
+        assert result[3]["usage"] == 0

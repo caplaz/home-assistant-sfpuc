@@ -264,15 +264,79 @@ class SFPUCScraper:
 
                                 # Parse timestamp based on resolution
                                 if resolution == "hourly":
-                                    # Format: MM/DD/YYYY HH:MM:SS
-                                    timestamp = datetime.strptime(
-                                        timestamp_str, "%m/%d/%Y %H:%M:%S"
-                                    )
+                                    # Try multiple formats for hourly data
+                                    timestamp = None
+                                    # First try full datetime format (for tests)
+                                    try:
+                                        timestamp = datetime.strptime(
+                                            timestamp_str, "%m/%d/%Y %H:%M:%S"
+                                        )
+                                    except ValueError:
+                                        pass
+
+                                    # If that fails, try AM/PM format without date (real SFPUC format)
+                                    if timestamp is None:
+                                        try:
+                                            # Handle AM/PM format like "12 AM", "1 PM"
+                                            if timestamp_str.upper().endswith(
+                                                " AM"
+                                            ) or timestamp_str.upper().endswith(" PM"):
+                                                hour_str = timestamp_str.split()[0]
+                                                am_pm = timestamp_str.split()[1].upper()
+                                                hour = int(hour_str)
+                                                if am_pm == "PM" and hour != 12:
+                                                    hour += 12
+                                                elif am_pm == "AM" and hour == 12:
+                                                    hour = 0
+                                                # Use current date for the timestamp
+                                                current_date = datetime.now().date()
+                                                timestamp = datetime.combine(
+                                                    current_date,
+                                                    datetime.min.time().replace(
+                                                        hour=hour
+                                                    ),
+                                                )
+                                        except (ValueError, IndexError):
+                                            pass
+
+                                    if timestamp is None:
+                                        _LOGGER.debug(
+                                            "Failed to parse hourly timestamp: %s",
+                                            timestamp_str,
+                                        )
+                                        continue
+
                                 elif resolution == "daily":
-                                    # Format: MM/DD/YYYY
-                                    timestamp = datetime.strptime(
-                                        timestamp_str, "%m/%d/%Y"
-                                    )
+                                    # Try multiple formats for daily data
+                                    timestamp = None
+                                    # First try full date format (for tests)
+                                    try:
+                                        timestamp = datetime.strptime(
+                                            timestamp_str, "%m/%d/%Y"
+                                        )
+                                    except ValueError:
+                                        pass
+
+                                    # If that fails, try MM/DD format without year (real SFPUC format)
+                                    if timestamp is None:
+                                        try:
+                                            month, day = map(
+                                                int, timestamp_str.split("/")
+                                            )
+                                            current_year = datetime.now().year
+                                            timestamp = datetime(
+                                                current_year, month, day
+                                            )
+                                        except (ValueError, IndexError):
+                                            pass
+
+                                    if timestamp is None:
+                                        _LOGGER.debug(
+                                            "Failed to parse daily timestamp: %s",
+                                            timestamp_str,
+                                        )
+                                        continue
+
                                 elif resolution == "monthly":
                                     # Format: MM/YYYY
                                     timestamp = datetime.strptime(
@@ -640,6 +704,12 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     start_time = timestamp.replace(
                         day=1, hour=0, minute=0, second=0, microsecond=0
                     )
+
+                # Convert naive timestamp to timezone-aware (assume PST/PDT for SF)
+                if start_time.tzinfo is None:
+                    # Use America/Los_Angeles timezone for San Francisco
+                    sf_timezone = dt_util.get_time_zone("America/Los_Angeles")
+                    start_time = start_time.replace(tzinfo=sf_timezone)
 
                 statistic_data.append(
                     StatisticData(

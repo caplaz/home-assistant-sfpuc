@@ -3,7 +3,7 @@
 from homeassistant.data_entry_flow import FlowResultType
 import pytest
 
-from custom_components.sf_water.config_flow import ConfigFlowHandler, OptionsFlowHandler
+from custom_components.sfpuc.config_flow import ConfigFlowHandler, OptionsFlowHandler
 
 from .common import MockConfigEntry
 

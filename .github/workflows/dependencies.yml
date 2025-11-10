@@ -29,7 +29,7 @@ jobs:
           # Check current compatibility in manifest
           MIN_HA_VERSION=$(python -c "
           import json
-          with open('custom_components/sf_water/manifest.json') as f:
+          with open('custom_components/sfpuc/manifest.json') as f:
               manifest = json.load(f)
           print(manifest.get('homeassistant', 'Not specified'))
           ")

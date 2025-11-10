@@ -17,7 +17,7 @@ def config_entry():
 @pytest.fixture
 def mock_scraper():
     """Create a mock SFPUC scraper."""
-    with patch("custom_components.sf_water.coordinator.SFPUCScraper") as mock:
+    with patch("custom_components.sfpuc.coordinator.SFPUCScraper") as mock:
         scraper = Mock()
         mock.return_value = scraper
         scraper.login.return_value = True
@@ -34,7 +34,7 @@ def mock_scraper():
 @pytest.fixture
 def mock_coordinator(hass, config_entry, mock_scraper):
     """Create a mock coordinator."""
-    with patch("custom_components.sf_water.coordinator.SFWaterCoordinator") as mock:
+    with patch("custom_components.sfpuc.coordinator.SFWaterCoordinator") as mock:
         coordinator = Mock()
         mock.return_value = coordinator
         coordinator.config_entry = config_entry
@@ -52,7 +52,7 @@ def setup_hass_data(hass):
     """Set up Home Assistant data structure for the integration."""
     from homeassistant.components.recorder import DATA_INSTANCE
 
-    from custom_components.sf_water.const import DOMAIN
+    from custom_components.sfpuc.const import DOMAIN
 
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}

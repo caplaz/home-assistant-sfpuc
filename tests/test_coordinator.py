@@ -6,8 +6,8 @@ from unittest.mock import Mock, patch
 from homeassistant.helpers.update_coordinator import UpdateFailed
 import pytest
 
-from custom_components.sf_water.const import DEFAULT_UPDATE_INTERVAL
-from custom_components.sf_water.coordinator import SFWaterCoordinator
+from custom_components.sfpuc.const import DEFAULT_UPDATE_INTERVAL
+from custom_components.sfpuc.coordinator import SFWaterCoordinator
 
 from .common import MockConfigEntry
 
@@ -30,7 +30,7 @@ class TestSFWaterCoordinator:
         assert coordinator._historical_data_fetched is False
         assert coordinator.update_interval == timedelta(minutes=DEFAULT_UPDATE_INTERVAL)
 
-    @patch("custom_components.sf_water.coordinator.SFPUCScraper")
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @pytest.mark.asyncio
     async def test_update_data_success_first_run(
         self, mock_scraper_class, hass, config_entry
@@ -79,9 +79,7 @@ class TestSFWaterCoordinator:
         coordinator = SFWaterCoordinator(hass, config_entry)
 
         # Mock async_add_external_statistics
-        with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
-        ):
+        with patch("custom_components.sfpuc.coordinator.async_add_external_statistics"):
             result = await coordinator._async_update_data()
 
         assert result["daily_usage"] == 95.0  # Sum of hourly data
@@ -92,7 +90,7 @@ class TestSFWaterCoordinator:
         # Verify historical data was fetched (2 historical + 2 current + 2 backfill)
         assert mock_scraper.get_usage_data.call_count == 6
 
-    @patch("custom_components.sf_water.coordinator.SFPUCScraper")
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @pytest.mark.asyncio
     async def test_update_data_login_failure(
         self, mock_scraper_class, hass, config_entry
@@ -107,7 +105,7 @@ class TestSFWaterCoordinator:
         with pytest.raises(UpdateFailed, match="Failed to login to SF PUC"):
             await coordinator._async_update_data()
 
-    @patch("custom_components.sf_water.coordinator.SFPUCScraper")
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @pytest.mark.asyncio
     async def test_update_data_no_current_data(
         self, mock_scraper_class, hass, config_entry
@@ -123,7 +121,7 @@ class TestSFWaterCoordinator:
         with pytest.raises(UpdateFailed, match="Failed to retrieve current usage data"):
             await coordinator._async_update_data()
 
-    @patch("custom_components.sf_water.coordinator.SFPUCScraper")
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @pytest.mark.asyncio
     async def test_fetch_historical_data_success(
         self, mock_scraper_class, hass, config_entry
@@ -153,7 +151,7 @@ class TestSFWaterCoordinator:
         coordinator = SFWaterCoordinator(hass, config_entry)
 
         with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
+            "custom_components.sfpuc.coordinator.async_add_external_statistics"
         ) as mock_add_stats:
             await coordinator._async_fetch_historical_data()
 
@@ -163,8 +161,8 @@ class TestSFWaterCoordinator:
         # Verify statistics were added
         assert mock_add_stats.call_count == 2
 
-    @patch("custom_components.sf_water.coordinator.SFPUCScraper")
-    @patch("custom_components.sf_water.coordinator._LOGGER")
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
+    @patch("custom_components.sfpuc.coordinator._LOGGER")
     @pytest.mark.asyncio
     async def test_fetch_historical_data_failure(
         self, mock_logger, mock_scraper_class, hass, config_entry
@@ -182,7 +180,7 @@ class TestSFWaterCoordinator:
         # Verify logger was called
         mock_logger.warning.assert_called()
 
-    @patch("custom_components.sf_water.coordinator.SFPUCScraper")
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @pytest.mark.asyncio
     async def test_backfill_missing_data_first_run(
         self, mock_scraper_class, hass, config_entry
@@ -212,7 +210,7 @@ class TestSFWaterCoordinator:
         coordinator = SFWaterCoordinator(hass, config_entry)
 
         with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
+            "custom_components.sfpuc.coordinator.async_add_external_statistics"
         ) as mock_add_stats:
             await coordinator._async_backfill_missing_data()
 
@@ -221,7 +219,7 @@ class TestSFWaterCoordinator:
         assert mock_add_stats.call_count == 2
         assert coordinator._last_backfill_date is not None
 
-    @patch("custom_components.sf_water.coordinator.SFPUCScraper")
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @pytest.mark.asyncio
     async def test_backfill_missing_data_recent_run(
         self, mock_scraper_class, hass, config_entry
@@ -258,7 +256,7 @@ class TestSFWaterCoordinator:
         ]
 
         with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
+            "custom_components.sfpuc.coordinator.async_add_external_statistics"
         ) as mock_add_stats:
             await coordinator._async_insert_statistics(hourly_data)
 
@@ -278,7 +276,7 @@ class TestSFWaterCoordinator:
         ]
 
         with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
+            "custom_components.sfpuc.coordinator.async_add_external_statistics"
         ) as mock_add_stats:
             await coordinator._async_insert_statistics(daily_data)
 
@@ -300,7 +298,7 @@ class TestSFWaterCoordinator:
         ]
 
         with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
+            "custom_components.sfpuc.coordinator.async_add_external_statistics"
         ) as mock_add_stats:
             await coordinator._async_insert_statistics(monthly_data)
 
@@ -312,7 +310,7 @@ class TestSFWaterCoordinator:
         coordinator = SFWaterCoordinator(hass, config_entry)
 
         with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
+            "custom_components.sfpuc.coordinator.async_add_external_statistics"
         ) as mock_add_stats:
             await coordinator._async_insert_statistics(150.0)
 
@@ -326,7 +324,7 @@ class TestSFWaterCoordinator:
         coordinator = SFWaterCoordinator(hass, config_entry)
 
         with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
+            "custom_components.sfpuc.coordinator.async_add_external_statistics"
         ) as mock_add_stats:
             await coordinator._async_insert_statistics([])
 
@@ -348,7 +346,7 @@ class TestSFWaterCoordinator:
         ]
 
         with patch(
-            "custom_components.sf_water.coordinator.async_add_external_statistics"
+            "custom_components.sfpuc.coordinator.async_add_external_statistics"
         ) as mock_add_stats:
             await coordinator._async_insert_resolution_statistics(
                 data_points, "invalid"

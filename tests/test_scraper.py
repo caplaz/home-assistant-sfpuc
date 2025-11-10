@@ -3,7 +3,7 @@
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-from custom_components.sf_water.coordinator import SFPUCScraper
+from custom_components.sfpuc.coordinator import SFPUCScraper
 
 
 class TestSFPUCScraper:

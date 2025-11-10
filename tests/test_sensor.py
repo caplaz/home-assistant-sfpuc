@@ -7,8 +7,8 @@ from homeassistant.const import UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType
 
-from custom_components.sf_water.coordinator import SFWaterCoordinator
-from custom_components.sf_water.sensor import WATER_SENSORS, SFWaterSensor
+from custom_components.sfpuc.coordinator import SFWaterCoordinator
+from custom_components.sfpuc.sensor import WATER_SENSORS, SFWaterSensor
 
 from .common import MockConfigEntry
 
@@ -39,7 +39,7 @@ class TestSFWaterSensor:
         assert sensor._attr_unique_id == f"{self.config_entry.entry_id}_daily_usage"
         assert sensor._attr_device_info["entry_type"] == DeviceEntryType.SERVICE
         assert sensor._attr_device_info["identifiers"] == {
-            ("sf_water", self.config_entry.entry_id)
+            ("sfpuc", self.config_entry.entry_id)
         }
         assert sensor._attr_device_info["manufacturer"] == "SFPUC"
         assert sensor._attr_device_info["model"] == "Water Usage"

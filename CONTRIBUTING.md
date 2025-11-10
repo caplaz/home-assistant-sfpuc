@@ -35,13 +35,13 @@ bandit -r custom_components/
 
 ```bash
 pytest tests/ -v
-pytest tests/ -v --cov=custom_components/sf_water
+pytest tests/ -v --cov=custom_components/sfpuc
 ```
 
 ## Project Structure
 
 ```
-custom_components/sf_water/
+custom_components/sfpuc/
 ├── __init__.py              # Integration setup
 ├── config_flow.py           # UI configuration flow
 ├── const.py                 # Constants and configuration
@@ -89,7 +89,7 @@ pytest tests/ -v
 #### Run Tests with Coverage
 
 ```bash
-pytest --cov=custom_components/sf_water --cov-report=html
+pytest --cov=custom_components/sfpuc --cov-report=html
 open htmlcov/index.html  # View coverage report
 ```
 
@@ -134,7 +134,7 @@ bandit -r custom_components/
 
 #### Manual Testing
 
-1. Copy `custom_components/sf_water` to your HA config directory
+1. Copy `custom_components/sfpuc` to your HA config directory
 2. Restart Home Assistant
 3. Check logs for any errors:
 
@@ -142,7 +142,7 @@ bandit -r custom_components/
 logger:
   default: info
   logs:
-    custom_components.sf_water: debug
+    custom_components.sfpuc: debug
 ```
 
 ## SFPUC Integration Details
@@ -217,7 +217,7 @@ Enable debug logging in `configuration.yaml`:
 logger:
   default: info
   logs:
-    custom_components.sf_water: debug
+    custom_components.sfpuc: debug
 ```
 
 ### Testing with Mock Data

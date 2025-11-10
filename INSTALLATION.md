@@ -80,13 +80,14 @@ cd hass-sfpuc
 
 ```bash
 # Copy the integration files
-cp -r custom_components/sf_water /config/custom_components/
+cp -r custom_components/sfpuc /config/custom_components/
 
 # Verify the files were copied
-ls -la /config/custom_components/sf_water/
+ls -la /config/custom_components/sfpuc/
 ```
 
 You should see these files:
+
 ```
 total 64
 drwxr-xr-x 2 homeassistant homeassistant  4096 Nov  9 12:00 .
@@ -104,11 +105,11 @@ drwxr-xr-x 2 homeassistant homeassistant  4096 Nov  9 12:00 translations
 
 ```bash
 # Set ownership to homeassistant user
-chown -R homeassistant:homeassistant /config/custom_components/sf_water/
+chown -R homeassistant:homeassistant /config/custom_components/sfpuc/
 
 # Set proper permissions
-chmod -R 644 /config/custom_components/sf_water/
-chmod 755 /config/custom_components/sf_water/
+chmod -R 644 /config/custom_components/sfpuc/
+chmod 755 /config/custom_components/sfpuc/
 ```
 
 #### Step 4: Restart Home Assistant
@@ -123,14 +124,17 @@ chmod 755 /config/custom_components/sf_water/
 ### Initial Setup
 
 1. **Access Integration Setup**:
+
    - Go to **Settings** → **Devices & Services**
    - Click **"Add Integration"** button
 
 2. **Find SF Water**:
+
    - Type "SF Water" in the search box
    - Click on "SF Water" when it appears
 
 3. **Enter Credentials**:
+
    - **SFPUC Username**: Your SFPUC account username (account number or email)
    - **SFPUC Password**: Your SFPUC portal password
    - **Update Interval**: How often to fetch data (15-1440 minutes, default 60)
@@ -162,7 +166,7 @@ After restart, verify the integration is loaded:
 
 The integration creates one sensor:
 
-- **SF Water Daily Usage** (`sensor.sf_water_daily_usage`)
+- **SF Water Daily Usage** (`sensor.sfpuc_daily_usage`)
   - Should show current daily usage in gallons
   - Device class: water
   - State class: total_increasing
@@ -172,14 +176,14 @@ The integration creates one sensor:
 If issues occur, check the logs:
 
 1. Go to **Settings** → **System** → **Logs**
-2. Look for entries from `custom_components.sf_water`
+2. Look for entries from `custom_components.sfpuc`
 3. Enable debug logging if needed:
 
 ```yaml
 # Add to configuration.yaml
 logger:
   logs:
-    custom_components.sf_water: debug
+    custom_components.sfpuc: debug
 ```
 
 ## Troubleshooting
@@ -191,9 +195,10 @@ logger:
 **Symptoms**: SF Water doesn't show up in the integrations list
 
 **Solutions**:
+
 1. Ensure Home Assistant restarted completely
 2. Check file permissions are correct
-3. Verify files are in the right location: `/config/custom_components/sf_water/`
+3. Verify files are in the right location: `/config/custom_components/sfpuc/`
 4. Check logs for import errors
 
 #### Authentication Failed
@@ -201,6 +206,7 @@ logger:
 **Symptoms**: Setup fails with "Invalid username or password"
 
 **Solutions**:
+
 1. Verify your SFPUC credentials on the SFPUC website
 2. Check for typos in username/password
 3. Ensure your SFPUC account is active
@@ -211,6 +217,7 @@ logger:
 **Symptoms**: Sensor exists but shows "unavailable" or no data
 
 **Solutions**:
+
 1. Check SFPUC website is accessible
 2. Verify internet connection
 3. Check Home Assistant logs for errors
@@ -227,10 +234,10 @@ You can test the integration manually:
 docker exec -it homeassistant bash
 
 # Test Python imports
-python3 -c "import custom_components.sf_water; print('Import successful')"
+python3 -c "import custom_components.sfpuc; print('Import successful')"
 
 # Check file structure
-ls -la /config/custom_components/sf_water/
+ls -la /config/custom_components/sfpuc/
 ```
 
 #### Debug Mode
@@ -242,7 +249,7 @@ Enable detailed logging:
 logger:
   default: info
   logs:
-    custom_components.sf_water: debug
+    custom_components.sfpuc: debug
     homeassistant.components.sensor: debug
 ```
 
@@ -262,7 +269,7 @@ If installed via HACS:
 For manual installations:
 
 1. Download the new version
-2. Replace the files in `/config/custom_components/sf_water/`
+2. Replace the files in `/config/custom_components/sfpuc/`
 3. Restart Home Assistant
 
 ## Uninstallation
@@ -273,7 +280,7 @@ To remove the integration:
 2. Find "SF Water" and click it
 3. Click **"Delete"** at the bottom
 4. Confirm deletion
-5. Remove the files: `rm -rf /config/custom_components/sf_water/`
+5. Remove the files: `rm -rf /config/custom_components/sfpuc/`
 6. Restart Home Assistant
 
 ## Support
@@ -299,4 +306,4 @@ After successful installation:
 
 ---
 
-*This integration is not officially affiliated with or endorsed by the San Francisco Public Utilities Commission (SFPUC). Use at your own risk and in accordance with SFPUC's terms of service.*
+_This integration is not officially affiliated with or endorsed by the San Francisco Public Utilities Commission (SFPUC). Use at your own risk and in accordance with SFPUC's terms of service._

@@ -31,7 +31,7 @@ jobs:
           # Check manifest.json version
           MANIFEST_VERSION=$(python -c "
           import json
-          with open('custom_components/sf_water/manifest.json') as f:
+          with open('custom_components/sfpuc/manifest.json') as f:
               print(json.load(f)['version'])
           ")
 
@@ -63,7 +63,7 @@ jobs:
         run: |
           # Create a clean release archive
           mkdir -p release/custom_components
-          cp -r custom_components/sf_water release/custom_components/
+          cp -r custom_components/sfpuc release/custom_components/
 
           # Remove any development files
           find release/ -name "*.pyc" -delete
@@ -71,11 +71,11 @@ jobs:
           find release/ -name ".DS_Store" -delete 2>/dev/null || true
 
           # Create zip file
-          cd release && zip -r ../sf_water-${{ steps.version.outputs.version }}.zip .
+          cd release && zip -r ../sfpuc-${{ steps.version.outputs.version }}.zip .
           cd ..
 
           # Also create tar.gz
-          cd release && tar -czf ../sf_water-${{ steps.version.outputs.version }}.tar.gz .
+          cd release && tar -czf ../sfpuc-${{ steps.version.outputs.version }}.tar.gz .
           cd ..
 
       - name: Create GitHub Release
@@ -88,8 +88,8 @@ jobs:
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
           artifacts: |
-            sf_water-${{ steps.version.outputs.version }}.zip
-            sf_water-${{ steps.version.outputs.version }}.tar.gz
+            sfpuc-${{ steps.version.outputs.version }}.zip
+            sfpuc-${{ steps.version.outputs.version }}.tar.gz
           token: ${{ secrets.GITHUB_TOKEN }}
 
   validate-release:
@@ -109,15 +109,15 @@ jobs:
       - name: Validate release archive
         run: |
           # Extract and validate the release archive
-          unzip sf_water-*.zip -d test_release/
+          unzip sfpuc-*.zip -d test_release/
 
           # Check that required files exist
-          if [ ! -f test_release/custom_components/sf_water/manifest.json ]; then
+          if [ ! -f test_release/custom_components/sfpuc/manifest.json ]; then
             echo "manifest.json missing from release"
             exit 1
           fi
 
-          if [ ! -f test_release/custom_components/sf_water/__init__.py ]; then
+          if [ ! -f test_release/custom_components/sfpuc/__init__.py ]; then
             echo "__init__.py missing from release"
             exit 1
           fi
@@ -125,7 +125,7 @@ jobs:
           # Validate manifest.json can be parsed
           python -c "
           import json
-          with open('test_release/custom_components/sf_water/manifest.json') as f:
+          with open('test_release/custom_components/sfpuc/manifest.json') as f:
               manifest = json.load(f)
           print(f'Release validation passed for version {manifest[\"version\"]}')
           "

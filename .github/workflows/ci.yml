@@ -63,12 +63,12 @@ jobs:
       - name: Validate Custom Component Structure
         run: |
           # Check required files exist
-          if [ ! -f custom_components/sf_water/__init__.py ]; then
+          if [ ! -f custom_components/sfpuc/__init__.py ]; then
             echo "Missing __init__.py"
             exit 1
           fi
 
-          if [ ! -f custom_components/sf_water/manifest.json ]; then
+          if [ ! -f custom_components/sfpuc/manifest.json ]; then
             echo "Missing manifest.json"
             exit 1
           fi
@@ -79,7 +79,7 @@ jobs:
           import sys
 
           try:
-              with open('custom_components/sf_water/manifest.json') as f:
+              with open('custom_components/sfpuc/manifest.json') as f:
                   manifest = json.load(f)
 
               required_fields = ['domain', 'name', 'version', 'documentation', 'issue_tracker', 'requirements', 'codeowners']
@@ -108,13 +108,13 @@ jobs:
           sys.path.insert(0, 'custom_components')
 
           try:
-              from sf_water.const import DOMAIN
+              from sfpuc.const import DOMAIN
               print(f'✅ Component import successful, domain: {DOMAIN}')
 
-              from sf_water.config_flow import ConfigFlow
+              from sfpuc.config_flow import ConfigFlow
               print('✅ Config flow import successful')
 
-              from sf_water.coordinator import SFWaterCoordinator
+              from sfpuc.coordinator import SFWaterCoordinator
               print('✅ Coordinator import successful')
 
           except Exception as e:
@@ -210,7 +210,7 @@ jobs:
         run: |
           python -c "
           import json
-          with open('custom_components/sf_water/manifest.json') as f:
+          with open('custom_components/sfpuc/manifest.json') as f:
               manifest = json.load(f)
 
           required_fields = ['domain', 'name', 'version', 'documentation', 'issue_tracker', 'codeowners']
@@ -249,14 +249,14 @@ jobs:
           # Extract version from manifest.json
           MANIFEST_VERSION=$(python -c "
           import json
-          with open('custom_components/sf_water/manifest.json') as f:
+          with open('custom_components/sfpuc/manifest.json') as f:
               print(json.load(f)['version'])
           ")
 
           # Extract version from version.py
           VERSION_PY=$(python -c "
           import sys
-          sys.path.append('custom_components/sf_water')
+          sys.path.append('custom_components/sfpuc')
           from version import __version__
           print(__version__)
           ")

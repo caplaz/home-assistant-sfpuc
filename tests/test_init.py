@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from custom_components.sf_water import async_setup_entry, async_unload_entry
+from custom_components.sfpuc import async_setup_entry, async_unload_entry
 
 from .common import MockConfigEntry
 
@@ -18,7 +18,7 @@ class TestSFWaterIntegration:
         self.hass = hass
         self.config_entry = MockConfigEntry()
 
-    @patch("custom_components.sf_water.SFWaterCoordinator")
+    @patch("custom_components.sfpuc.SFWaterCoordinator")
     async def test_async_setup_entry_success(
         self, mock_coordinator_class, hass, config_entry
     ):
@@ -43,7 +43,7 @@ class TestSFWaterIntegration:
             # Verify platforms were forwarded
             mock_forward.assert_called_once_with(config_entry, ["sensor"])
 
-    @patch("custom_components.sf_water.SFWaterCoordinator")
+    @patch("custom_components.sfpuc.SFWaterCoordinator")
     async def test_async_setup_entry_coordinator_refresh_failure(
         self, mock_coordinator_class, hass, config_entry
     ):

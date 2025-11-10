@@ -15,7 +15,7 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.sf_water: debug
+    custom_components.sfpuc: debug
 
 # Frontend configuration
 frontend:

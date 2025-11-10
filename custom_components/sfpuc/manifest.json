@@ -1,5 +1,5 @@
 {
-  "domain": "sf_water",
+  "domain": "sfpuc",
   "name": "SF Water",
   "codeowners": ["@caplaz"],
   "config_flow": true,
@@ -8,7 +8,7 @@
   "integration_type": "integration",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/caplaz/hass-sfpuc/issues",
-  "loggers": ["custom_components.sf_water"],
+  "loggers": ["custom_components.sfpuc"],
   "quality_scale": "silver",
   "requirements": [
     "requests>=2.25.1",

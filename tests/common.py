@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 
-from custom_components.sf_water.const import DOMAIN
+from custom_components.sfpuc.const import DOMAIN
 
 
 class MockConfigEntry:

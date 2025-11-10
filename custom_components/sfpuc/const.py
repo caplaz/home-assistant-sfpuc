@@ -1,6 +1,6 @@
 """Constants for the SF Water integration."""
 
-DOMAIN = "sf_water"
+DOMAIN = "sfpuc"
 
 # Configuration options
 CONF_USERNAME = "username"

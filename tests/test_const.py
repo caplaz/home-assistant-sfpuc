@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from custom_components.sf_water.const import (
+from custom_components.sfpuc.const import (
     CONF_PASSWORD,
     CONF_USERNAME,
     DEFAULT_UPDATE_INTERVAL,
@@ -18,7 +18,7 @@ class TestConstants:
 
     def test_domain_constant(self):
         """Test DOMAIN constant."""
-        assert DOMAIN == "sf_water"
+        assert DOMAIN == "sfpuc"
         assert isinstance(DOMAIN, str)
         assert len(DOMAIN) > 0
 
@@ -50,7 +50,7 @@ class TestManifest:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
         assert manifest_path.exists()
@@ -60,7 +60,7 @@ class TestManifest:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
 
@@ -74,7 +74,7 @@ class TestManifest:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
 
@@ -102,7 +102,7 @@ class TestManifest:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
 
@@ -116,7 +116,7 @@ class TestManifest:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
 
@@ -130,7 +130,7 @@ class TestManifest:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
 
@@ -150,7 +150,7 @@ class TestManifest:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
 
@@ -165,7 +165,7 @@ class TestManifest:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
 
@@ -191,7 +191,7 @@ class TestVersionConsistency:
         manifest_path = (
             Path(__file__).parent.parent
             / "custom_components"
-            / "sf_water"
+            / "sfpuc"
             / "manifest.json"
         )
         with open(manifest_path, "r", encoding="utf-8") as f:

@@ -119,7 +119,7 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 2. **Copy Files**:
 
    ```bash
-   cp -r hass-sfpuc-1.0.0/custom_components/sf_water /config/custom_components/
+   cp -r hass-sfpuc-1.0.0/custom_components/sfpuc /config/custom_components/
    ```
 
 3. **Restart Home Assistant**:
@@ -144,7 +144,7 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 
 The integration creates multiple sensors for different time resolutions:
 
-- **SF Water Daily Usage** (`sensor.sf_water_daily_usage`)
+- **SF Water Daily Usage** (`sensor.sfpuc_daily_usage`)
 
   - **State**: Daily water usage in gallons
   - **Device Class**: `water`
@@ -152,7 +152,7 @@ The integration creates multiple sensors for different time resolutions:
   - **Unit**: `gal` (gallons)
   - **Update**: Every 12 hours
 
-- **SF Water Hourly Usage** (`sensor.sf_water_hourly_usage`)
+- **SF Water Hourly Usage** (`sensor.sfpuc_hourly_usage`)
 
   - **State**: Most recent hourly water usage in gallons
   - **Device Class**: `water`
@@ -160,7 +160,7 @@ The integration creates multiple sensors for different time resolutions:
   - **Unit**: `gal` (gallons)
   - **Update**: Every 12 hours
 
-- **SF Water Monthly Usage** (`sensor.sf_water_monthly_usage`)
+- **SF Water Monthly Usage** (`sensor.sfpuc_monthly_usage`)
   - **State**: Current month-to-date water usage in gallons
   - **Device Class**: `water`
   - **State Class**: `total_increasing`
@@ -176,7 +176,7 @@ The integration enables water usage monitoring in the Energy dashboard:
 1. **Navigate to Energy Dashboard**: Settings → Dashboards → Energy
 2. **Add Water Consumption**:
    - Click "Add Consumption" (water usage is consumption)
-   - Select `sensor.sf_water_daily_usage`
+   - Select `sensor.sfpuc_daily_usage`
    - Configure display preferences
 3. **View Historical Data**: The dashboard will show water usage trends over time
 4. **Statistics Integration**: Historical data is automatically stored for long-term analysis
@@ -186,7 +186,7 @@ The integration enables water usage monitoring in the Energy dashboard:
 For detailed monitoring, add a sensor card to your dashboard:
 
 1. **Add Card**: Dashboard → Add Card → Sensor
-2. **Select Sensor**: Choose `sensor.sf_water_daily_usage`
+2. **Select Sensor**: Choose `sensor.sfpuc_daily_usage`
 3. **Customize**: Set display options, icons, and graph preferences
 4. **Historical View**: Enable graph to see usage patterns
 
@@ -224,7 +224,7 @@ Enable debug logging to troubleshoot issues:
 ```yaml
 logger:
   logs:
-    custom_components.sf_water: debug
+    custom_components.sfpuc: debug
 ```
 
 ## Technical Details

@@ -37,7 +37,7 @@ This directory contains a Docker-based development environment for testing the S
 
 ### Making Code Changes
 
-1. Edit the integration code in `custom_components/sf_water/`
+1. Edit the integration code in `custom_components/sfpuc/`
 2. Restart Home Assistant to reload the integration:
    ```bash
    docker-compose restart homeassistant
@@ -87,12 +87,12 @@ Add this to your `configuration.yaml`:
 logger:
   default: info
   logs:
-    custom_components.sf_water: debug
+    custom_components.sfpuc: debug
 ```
 
 #### Common Issues
 
-1. **Integration not loading**: Check that `custom_components/sf_water/` is properly mounted
+1. **Integration not loading**: Check that `custom_components/sfpuc/` is properly mounted
 2. **Login failures**: Verify SFPUC credentials are correct
 3. **No data**: Check SFPUC portal availability and credentials
 4. **Permission errors**: Ensure proper file permissions in the container
@@ -100,7 +100,7 @@ logger:
 ### Code Structure
 
 ```
-custom_components/sf_water/
+custom_components/sfpuc/
 ├── __init__.py              # Integration initialization
 ├── config_flow.py           # Configuration flow for setup
 ├── const.py                 # Constants and configuration keys

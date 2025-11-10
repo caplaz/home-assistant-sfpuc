@@ -354,3 +354,52 @@ class TestSFPUCScraper:
             current_date, datetime.min.time().replace(hour=13)
         )
         assert result[3]["usage"] == 0
+
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_get_usage_data_monthly_uses_billed_page(self, mock_post, mock_get):
+        """Test that monthly data uses USE_BILLED.aspx page and Billed+Use data type."""
+        # Mock the usage page response
+        usage_page = Mock()
+        usage_page.content = b"""
+        <html>
+            <form>
+                <input name="token1" value="value1" />
+            </form>
+        </html>
+        """
+        mock_get.return_value = usage_page
+
+        # Mock the download response
+        download_response = Mock()
+        download_response.url = (
+            "https://myaccount-water.sfpuc.org/TRANSACTIONS_EXCEL_DOWNLOAD.aspx"
+        )
+        download_response.content = b"Date\tUsage\n10/2023\t4500.5\n"
+        mock_post.return_value = download_response
+
+        start_date = datetime(2023, 10, 1)
+        end_date = datetime(2023, 10, 31)
+
+        result = self.scraper.get_usage_data(start_date, end_date, "monthly")
+
+        # Verify the correct URLs were used
+        mock_get.assert_called_once()
+        get_call_args = mock_get.call_args
+        assert "USE_BILLED.aspx" in get_call_args[0][0]  # Navigation URL
+
+        # Verify POST was made to USE_BILLED.aspx
+        mock_post.assert_called_once()
+        post_call_args = mock_post.call_args
+        assert "USE_BILLED.aspx" in post_call_args[0][0]  # Download URL
+
+        # Verify data_type was set to "Billed+Use"
+        post_data = post_call_args[1]["data"]
+        assert post_data["tb_DAILY_USE"] == "Billed+Use"
+
+        # Verify result
+        assert result is not None
+        assert len(result) == 1
+        assert result[0]["timestamp"] == datetime(2023, 10, 1)
+        assert result[0]["usage"] == 4500.5
+        assert result[0]["resolution"] == "monthly"

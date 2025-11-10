@@ -199,8 +199,9 @@ class SFPUCScraper:
                 usage_url = f"{self.base_url}/USE_DAILY.aspx"
                 data_type = "Daily+Use"
             elif resolution == "monthly":
-                usage_url = f"{self.base_url}/USE_MONTHLY.aspx"
-                data_type = "Monthly+Use"
+                # Use the billed usage page for monthly data
+                usage_url = f"{self.base_url}/USE_BILLED.aspx"
+                data_type = "Billed+Use"
             else:
                 _LOGGER.error("Invalid resolution specified: %s", resolution)
                 return None
@@ -235,7 +236,10 @@ class SFPUCScraper:
             )
 
             # POST to trigger download
-            download_url = f"{self.base_url}/USE_{resolution.upper()}.aspx"
+            if resolution == "monthly":
+                download_url = f"{self.base_url}/USE_BILLED.aspx"
+            else:
+                download_url = f"{self.base_url}/USE_{resolution.upper()}.aspx"
             _LOGGER.debug("Triggering Excel download from: %s", download_url)
             response = self.session.post(
                 download_url, data=tokens, allow_redirects=True
@@ -520,7 +524,9 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self._async_insert_statistics(monthly_data)
                 self.logger.info("Fetched %d monthly data points", len(monthly_data))
             else:
-                self.logger.warning("No monthly data retrieved")
+                self.logger.info(
+                    "Monthly data not available from SFPUC (page may no longer exist)"
+                )
 
             # Fetch daily data for the past 90 days (more detailed recent data)
             start_date = end_date - timedelta(days=90)

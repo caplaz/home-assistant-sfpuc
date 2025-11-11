@@ -737,22 +737,11 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         "Historical data already present in database - skipping fetch"
                     )
 
-            # Fetch historical data on first run (if not already in database)
+            # Schedule historical data fetch on first run (if not already in database)
+            # Run in background to avoid blocking startup
             if not self._historical_data_fetched:
-                self.logger.debug("First run - fetching historical data")
-                try:
-                    await self._async_fetch_historical_data()
-                    self._historical_data_fetched = True
-                    # Set backfill date to now to avoid re-fetching the same data
-                    self._last_backfill_date = datetime.now()
-                    self.logger.info("Historical data fetch completed successfully")
-                except Exception as err:
-                    self.logger.warning(
-                        "Historical data fetch failed, continuing with current data only: %s",
-                        err,
-                    )
-                    # Don't set _historical_data_fetched to True so we retry next time
-                    # But continue with the update to provide current data
+                self.logger.info("Scheduling historical data fetch in background...")
+                asyncio.create_task(self._async_background_historical_fetch())
 
             # Detect billing day from monthly data (if not already detected)
             if self._billing_day is None:
@@ -871,9 +860,12 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         Logs warnings if data retrieval fails but does not raise exceptions
         to avoid blocking the initial coordinator setup.
+
+        NOTE: This method is now scheduled to run in the background after
+        initial setup to avoid blocking Home Assistant startup.
         """
         try:
-            self.logger.info("Fetching historical water usage data...")
+            self.logger.info("Fetching historical water usage data in background...")
 
             # Fetch data at different resolutions
             end_date = datetime.now()
@@ -996,6 +988,27 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         except Exception as err:
             self.logger.warning("Failed to fetch historical data: %s", err)
+
+    async def _async_background_historical_fetch(self) -> None:
+        """Fetch historical data in background after startup.
+
+        This method runs the historical data fetch process in the background
+        to avoid blocking Home Assistant startup. It waits 30 seconds after
+        startup before beginning to allow HA to fully initialize.
+        """
+        try:
+            # Wait 30 seconds to let Home Assistant fully start
+            await asyncio.sleep(30)
+
+            self.logger.info("Starting background historical data fetch...")
+            await self._async_fetch_historical_data()
+            self._historical_data_fetched = True
+            # Set backfill date to now to avoid re-fetching the same data
+            self._last_backfill_date = datetime.now()
+            self.logger.info("Background historical data fetch completed successfully")
+        except Exception as err:
+            self.logger.warning("Background historical data fetch failed: %s", err)
+            # Don't set _historical_data_fetched to True so we retry on next coordinator update
 
     async def _async_backfill_missing_data(self) -> None:
         """Backfill missing data with 30-day lookback window.

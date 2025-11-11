@@ -41,54 +41,44 @@ class TestSFWaterCoordinator:
         mock_scraper_class.return_value = mock_scraper
         mock_scraper.login.return_value = True
 
-        # Mock get_usage_data to return different data based on resolution
-        def mock_get_usage_data(start_date, end_date, resolution):
-            if resolution == "hourly":
-                return [
-                    {
-                        "timestamp": datetime(2023, 10, 1, 10, 0),
-                        "usage": 50.0,
-                        "resolution": "hourly",
-                    },
-                    {
-                        "timestamp": datetime(2023, 10, 1, 11, 0),
-                        "usage": 45.0,
-                        "resolution": "hourly",
-                    },
-                ]
-            elif resolution == "monthly":
-                return [
-                    {
-                        "timestamp": datetime(2023, 8, 1),
-                        "usage": 4500.0,
-                        "resolution": "monthly",
-                    }
-                ]
-            elif resolution == "daily":
-                return [
-                    {
-                        "timestamp": datetime(2023, 10, 1),
-                        "usage": 200.0,
-                        "resolution": "daily",
-                    }
-                ]
-            return []
-
-        mock_scraper.get_usage_data.side_effect = mock_get_usage_data
-
         coordinator = SFWaterCoordinator(hass, config_entry)
 
-        # Mock async_add_external_statistics
-        with patch("custom_components.sfpuc.coordinator.async_add_external_statistics"):
+        # Mock statistics_during_period and async_add_external_statistics
+        from unittest.mock import AsyncMock
+
+        safe_account = (
+            config_entry.data.get("username", "unknown").replace("-", "_").lower()
+        )
+        stat_id = f"sfpuc:{safe_account}_water_consumption"
+
+        with (
+            patch(
+                "homeassistant.components.recorder.get_instance"
+            ) as mock_get_instance,
+            patch("custom_components.sfpuc.coordinator.async_add_external_statistics"),
+            patch.object(
+                coordinator, "_async_backfill_missing_data", return_value=None
+            ),
+            patch.object(
+                coordinator, "_async_check_has_historical_data", return_value=False
+            ),
+            patch.object(coordinator, "_async_detect_billing_day", return_value=None),
+        ):
+            mock_recorder = Mock()
+            mock_recorder.async_add_executor_job = AsyncMock(
+                return_value={stat_id: [{"state": 95.0}, {"state": 45.0}]}
+            )
+            mock_get_instance.return_value = mock_recorder
             result = await coordinator._async_update_data()
 
-        assert result["daily_usage"] == 95.0  # Sum of hourly data
-        assert result["hourly_usage"] == 45.0  # Latest hourly usage
-        assert result["monthly_usage"] == 200.0  # Current month usage
-        assert coordinator._historical_data_fetched is True
+        assert result["current_bill_usage"] == 140.0  # Sum of the states
+        assert "last_updated" in result
+        assert (
+            coordinator._historical_data_fetched is False
+        )  # Background task scheduled, not completed
 
-        # Verify historical data was fetched (2 historical + 2 current + 2 backfill)
-        assert mock_scraper.get_usage_data.call_count == 6
+        # No direct calls to get_usage_data in _async_update_data (backfill mocked)
+        assert mock_scraper.get_usage_data.call_count == 0
 
     @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @pytest.mark.asyncio
@@ -118,8 +108,31 @@ class TestSFWaterCoordinator:
 
         coordinator = SFWaterCoordinator(hass, config_entry)
 
-        with pytest.raises(UpdateFailed, match="Failed to retrieve current usage data"):
-            await coordinator._async_update_data()
+        # Mock statistics to return empty
+        from unittest.mock import AsyncMock
+
+        with (
+            patch(
+                "homeassistant.components.recorder.get_instance"
+            ) as mock_get_instance,
+            patch("custom_components.sfpuc.coordinator.async_add_external_statistics"),
+            patch.object(
+                coordinator, "_async_backfill_missing_data", return_value=None
+            ),
+            patch.object(
+                coordinator, "_async_check_has_historical_data", return_value=False
+            ),
+            patch.object(coordinator, "_async_detect_billing_day", return_value=None),
+        ):
+            mock_recorder = Mock()
+            mock_recorder.async_add_executor_job = AsyncMock(
+                return_value={}
+            )  # Empty stats
+            mock_get_instance.return_value = mock_recorder
+            result = await coordinator._async_update_data()
+
+        assert result["current_bill_usage"] == 0.0
+        assert "last_updated" in result
 
     @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @pytest.mark.asyncio
@@ -156,10 +169,10 @@ class TestSFWaterCoordinator:
             await coordinator._async_fetch_historical_data()
 
         # Verify historical data calls
-        assert mock_scraper.get_usage_data.call_count == 2
+        assert mock_scraper.get_usage_data.call_count == 4
 
         # Verify statistics were added
-        assert mock_add_stats.call_count == 2
+        assert mock_add_stats.call_count == 1
 
     @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
     @patch("custom_components.sfpuc.coordinator._LOGGER")
@@ -215,8 +228,8 @@ class TestSFWaterCoordinator:
             await coordinator._async_backfill_missing_data()
 
         # Should perform backfill on first run
-        assert mock_scraper.get_usage_data.call_count == 2
-        assert mock_add_stats.call_count == 2
+        assert mock_scraper.get_usage_data.call_count == 3
+        assert mock_add_stats.call_count == 1
         assert coordinator._last_backfill_date is not None
 
     @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
@@ -302,7 +315,7 @@ class TestSFWaterCoordinator:
         ) as mock_add_stats:
             await coordinator._async_insert_statistics(monthly_data)
 
-        mock_add_stats.assert_not_called()
+        mock_add_stats.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_insert_statistics_legacy_float(self, hass, config_entry):

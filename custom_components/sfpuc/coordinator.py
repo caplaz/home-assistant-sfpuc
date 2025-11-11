@@ -320,10 +320,12 @@ class SFPUCScraper:
                                                     hour += 12
                                                 elif am_pm == "AM" and hour == 12:
                                                     hour = 0
-                                                # Use current date for the timestamp
-                                                current_date = datetime.now().date()
+                                                # Use the requested end_date for hourly data
+                                                # SFPUC typically shows hourly data up to 2 days ago
+                                                # Use end_date from the request instead of assuming today
+                                                request_date = end_date.date()
                                                 timestamp = datetime.combine(
-                                                    current_date,
+                                                    request_date,
                                                     datetime.min.time().replace(
                                                         hour=hour
                                                     ),
@@ -528,19 +530,88 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_backfill_date: datetime | None = None
         self._historical_data_fetched = False
         self._checked_for_historical_data = False
+        self._billing_day: int | None = None  # Detected billing day from monthly data
+
+    async def _async_detect_billing_day(self) -> int:
+        """Detect billing day from monthly statistics.
+
+        Analyzes monthly billing data to determine the billing cycle day.
+        Falls back to default of 25th if detection fails.
+
+        Returns:
+            Billing day of month (1-31)
+        """
+        if self._billing_day is not None:
+            return self._billing_day
+
+        try:
+            # Query monthly statistics to detect billing pattern
+            safe_account = (
+                self.config_entry.data.get(CONF_USERNAME, "unknown")
+                .replace("-", "_")
+                .lower()
+            )
+            stat_id = f"{DOMAIN}:{safe_account}_water_consumption"
+
+            # Get last 3 months of billing data
+            three_months_ago = datetime.now() - timedelta(days=90)
+            stats = await get_instance(self.hass).async_add_executor_job(
+                statistics_during_period,
+                self.hass,
+                dt_util.as_utc(three_months_ago),
+                None,  # end_time (None = now)
+                {stat_id},
+                "month",
+                None,
+                {"state"},
+            )
+
+            if stats and stat_id in stats and len(stats[stat_id]) >= 2:
+                # Extract days from monthly billing timestamps
+                billing_days = []
+                for stat in stats[stat_id]:
+                    start_time = stat.get("start")
+                    if start_time:
+                        # Convert to local timezone for accurate day extraction
+                        local_time = dt_util.as_local(start_time)
+                        billing_days.append(local_time.day)
+
+                # Use the most common billing day
+                if billing_days:
+                    from collections import Counter
+
+                    most_common = Counter(billing_days).most_common(1)[0][0]
+                    self._billing_day = most_common
+                    self.logger.info(
+                        "Detected billing day: %d (from %d monthly records)",
+                        self._billing_day,
+                        len(billing_days),
+                    )
+                    return self._billing_day
+
+            # Fallback to default
+            self._billing_day = 25
+            self.logger.info("Using default billing day: 25")
+            return self._billing_day
+
+        except Exception as err:
+            self.logger.warning(
+                "Failed to detect billing day, using default 25: %s", err
+            )
+            self._billing_day = 25
+            return self._billing_day
 
     def _calculate_billing_period(self) -> tuple[datetime, datetime]:
         """Calculate current SFPUC billing period dates.
 
-        SFPUC typically bills on the 25th of each month based on sample data.
-        This could be made dynamic by parsing billing dates from monthly data.
+        Uses billing day detected from monthly data, or defaults to 25th.
 
         Returns:
             Tuple of (bill_start_date, bill_end_date)
         """
-        # TODO: Make billing day dynamic by parsing from monthly billing data
-        # For now, use 25th as observed in sample data (May 25, Jun 25, Jul 25)
-        billing_day = 25
+        # Use detected billing day (will be set during first data fetch)
+        # Default to 25 if not yet detected
+        billing_day = self._billing_day if self._billing_day is not None else 25
 
         today = datetime.now()
         current_month_bill_date = today.replace(
@@ -577,7 +648,12 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             # Check for daily statistics from 1 year ago
             one_year_ago = datetime.now() - timedelta(days=365)
-            stat_id = f"{DOMAIN}:{self.config_entry.data[CONF_USERNAME]}_water_daily_consumption"
+            safe_account = (
+                self.config_entry.data.get(CONF_USERNAME, "unknown")
+                .replace("-", "_")
+                .lower()
+            )
+            stat_id = f"{DOMAIN}:{safe_account}_water_consumption"
 
             stats = await get_instance(self.hass).async_add_executor_job(
                 statistics_during_period,
@@ -678,6 +754,15 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     # Don't set _historical_data_fetched to True so we retry next time
                     # But continue with the update to provide current data
 
+            # Detect billing day from monthly data (if not already detected)
+            if self._billing_day is None:
+                try:
+                    await self._async_detect_billing_day()
+                except Exception as err:
+                    self.logger.warning(
+                        "Failed to detect billing day, will use default: %s", err
+                    )
+
             # Perform backfilling if needed (30-day lookback)
             # Skip if we just did a historical fetch to avoid duplicate/overlapping data
             try:
@@ -714,7 +799,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 .replace("-", "_")
                 .lower()
             )
-            stat_id = f"{DOMAIN}:{safe_account}_water_daily_consumption"
+            stat_id = f"{DOMAIN}:{safe_account}_water_consumption"
 
             try:
                 # Fetch statistics from bill_start to now
@@ -860,19 +945,50 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.logger.warning("Failed to fetch daily data: %s", err)
 
             # Fetch hourly data for the past 30 days (most detailed recent data)
+            # SFPUC allows hourly data only for recent dates (typically up to 2 days ago)
+            # Fetch in chunks to get complete 30-day hourly history
+            self.logger.info("Fetching hourly data in chunks...")
             try:
-                start_date = end_date - timedelta(days=30)
-                self.logger.debug(
-                    "Fetching hourly data from %s to %s",
-                    start_date.date(),
-                    end_date.date(),
-                )
-                hourly_data = await loop.run_in_executor(
-                    None, self.scraper.get_usage_data, start_date, end_date, "hourly"
-                )
-                if hourly_data:
-                    await self._async_insert_statistics(hourly_data)
-                    self.logger.info("Fetched %d hourly data points", len(hourly_data))
+                all_hourly_data = []
+                # Hourly data is available up to ~2 days ago
+                # We'll try to fetch 30 days worth, one day at a time
+                days_back = 30
+
+                for days_offset in range(
+                    2, days_back + 2
+                ):  # Start from 2 days ago, go back 30 days
+                    fetch_date = end_date - timedelta(days=days_offset)
+                    self.logger.debug(
+                        "Fetching hourly data for %s",
+                        fetch_date.date(),
+                    )
+
+                    # Fetch one day at a time for hourly data
+                    hourly_chunk = await loop.run_in_executor(
+                        None,
+                        self.scraper.get_usage_data,
+                        fetch_date,
+                        fetch_date,  # Same day for start and end
+                        "hourly",
+                    )
+
+                    if hourly_chunk:
+                        all_hourly_data.extend(hourly_chunk)
+                        self.logger.debug(
+                            "Fetched %d hourly data points for %s",
+                            len(hourly_chunk),
+                            fetch_date.date(),
+                        )
+
+                    # Small delay to avoid overwhelming the server
+                    await asyncio.sleep(0.3)
+
+                if all_hourly_data:
+                    await self._async_insert_statistics(all_hourly_data)
+                    self.logger.info(
+                        "Fetched %d hourly data points total for past 30 days",
+                        len(all_hourly_data),
+                    )
                 else:
                     self.logger.warning("No hourly data retrieved")
             except Exception as err:
@@ -926,15 +1042,29 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.logger.warning("Failed to backfill daily data: %s", err)
 
             # Check for missing hourly data in the recent past (last 7 days)
+            # Fetch day by day since SFPUC hourly data doesn't work well with date ranges
             try:
-                recent_start = now - timedelta(days=7)
-                hourly_data = await loop.run_in_executor(
-                    None, self.scraper.get_usage_data, recent_start, now, "hourly"
-                )
-                if hourly_data:
-                    await self._async_insert_statistics(hourly_data)
+                all_hourly_data = []
+                # Fetch hourly data from 2 days ago back to 7 days ago
+                for days_offset in range(
+                    2, 9
+                ):  # 2 days ago to 8 days ago (7 days of data)
+                    fetch_date = now - timedelta(days=days_offset)
+                    hourly_chunk = await loop.run_in_executor(
+                        None,
+                        self.scraper.get_usage_data,
+                        fetch_date,
+                        fetch_date,  # Same day for start and end
+                        "hourly",
+                    )
+                    if hourly_chunk:
+                        all_hourly_data.extend(hourly_chunk)
+                    await asyncio.sleep(0.2)  # Small delay
+
+                if all_hourly_data:
+                    await self._async_insert_statistics(all_hourly_data)
                     self.logger.debug(
-                        "Backfilled %d hourly data points", len(hourly_data)
+                        "Backfilled %d hourly data points", len(all_hourly_data)
                     )
                 else:
                     self.logger.debug("No hourly data found for backfilling")
@@ -1052,26 +1182,16 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
             # Create statistic metadata based on resolution
-            # Include account number in statistic ID for multi-account support
+            # Use SINGLE statistic ID for all resolutions
+            # This consolidates hourly, daily, and monthly data into one statistic
             account_number = self.config_entry.data.get(CONF_USERNAME, "default")
             # Sanitize account number (lowercase, replace special chars)
             safe_account = account_number.lower().replace("-", "_").replace(" ", "_")
 
-            if resolution == "hourly":
-                stat_id = f"{DOMAIN}:{safe_account}_water_hourly_consumption"
-                name = "San Francisco Water Power Sewer Hourly Usage"
-                has_sum = True
-            elif resolution == "daily":
-                stat_id = f"{DOMAIN}:{safe_account}_water_daily_consumption"
-                name = "San Francisco Water Power Sewer Daily Usage"
-                has_sum = True
-            elif resolution == "monthly":
-                stat_id = f"{DOMAIN}:{safe_account}_water_monthly_consumption"
-                name = "San Francisco Water Power Sewer Monthly Billed Usage"
-                has_sum = True
-            else:
-                self.logger.error("Unknown resolution for statistics: %s", resolution)
-                return
+            # Single unified statistic for all water consumption data
+            stat_id = f"{DOMAIN}:{safe_account}_water_consumption"
+            name = "San Francisco Water Power Sewer"
+            has_sum = True
 
             metadata = StatisticMetaData(
                 has_mean=False,
@@ -1165,16 +1285,16 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """
         try:
             # Create statistic metadata for daily water usage
-            # Include account number in statistic ID for multi-account support
+            # Use unified statistic ID (same as all other resolutions)
             account_number = self.config_entry.data.get(CONF_USERNAME, "default")
             # Sanitize account number (lowercase, replace special chars)
             safe_account = account_number.lower().replace("-", "_").replace(" ", "_")
             metadata = StatisticMetaData(
                 has_mean=False,
                 has_sum=True,
-                name="San Francisco Water Power Sewer Daily Usage",
+                name="San Francisco Water Power Sewer",
                 source=DOMAIN,
-                statistic_id=f"{DOMAIN}:{safe_account}_water_daily_consumption",
+                statistic_id=f"{DOMAIN}:{safe_account}_water_consumption",
                 unit_of_measurement=UnitOfVolume.GALLONS,
             )
 

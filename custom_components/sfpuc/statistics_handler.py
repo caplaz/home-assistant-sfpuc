@@ -3,10 +3,14 @@
 from typing import Any
 import zoneinfo
 
-from homeassistant.components.recorder.models import StatisticData, StatisticMetaData
+from homeassistant.components.recorder.models import (
+    StatisticData,
+    StatisticMeanType,
+    StatisticMetaData,
+)
 from homeassistant.components.recorder.statistics import async_add_external_statistics
 from homeassistant.components.recorder.util import DATA_INSTANCE
-from homeassistant.const import UnitOfVolume
+from homeassistant.const import VOLUME, UnitOfVolume
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_USERNAME, DOMAIN
@@ -135,9 +139,11 @@ async def async_insert_resolution_statistics(
         metadata = StatisticMetaData(
             has_mean=False,
             has_sum=has_sum,
+            mean_type=StatisticMeanType.NONE,
             name=name,
             source=DOMAIN,
             statistic_id=stat_id,
+            unit_class=VOLUME,
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
 
@@ -230,9 +236,11 @@ async def async_insert_legacy_statistics(coordinator, daily_usage: float) -> Non
         metadata = StatisticMetaData(
             has_mean=False,
             has_sum=True,
+            mean_type=StatisticMeanType.NONE,
             name="San Francisco Water Power Sewer",
             source=DOMAIN,
             statistic_id=f"{DOMAIN}:{safe_account}_water_consumption",
+            unit_class=VOLUME,
             unit_of_measurement=UnitOfVolume.GALLONS,
         )
 

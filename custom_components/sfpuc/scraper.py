@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import logging
-from typing import Any
+from typing import Any, cast
 
 from bs4 import BeautifulSoup
 import requests
@@ -363,7 +363,9 @@ class SFPUCScraper:
                                 continue
 
                 if usage_data:
-                    dates = [item["timestamp"] for item in usage_data]
+                    dates: list[datetime] = [
+                        cast(datetime, item["timestamp"]) for item in usage_data
+                    ]
                     _LOGGER.info(
                         "Successfully parsed %d %s data points (from %s to %s)",
                         len(usage_data),

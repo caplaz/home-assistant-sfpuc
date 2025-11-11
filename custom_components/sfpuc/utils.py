@@ -85,10 +85,10 @@ async def async_detect_billing_day(coordinator) -> int:
 
         if stats and stat_id in stats and len(stats[stat_id]) >= 2:
             # Extract days from monthly billing timestamps
-            billing_days = []
+            billing_days: list[int] = []
             for stat in stats[stat_id]:
                 start_time = stat.get("start")
-                if start_time:
+                if start_time and isinstance(start_time, datetime):
                     # Convert to local timezone for accurate day extraction
                     local_time = dt_util.as_local(start_time)
                     billing_days.append(local_time.day)

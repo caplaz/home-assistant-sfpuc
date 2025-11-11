@@ -33,6 +33,8 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     statistics card integration.
     """
 
+    config_entry: ConfigEntry[Any]
+
     def __init__(
         self,
         hass: HomeAssistant,
@@ -196,7 +198,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if stats and stat_id in stats:
                     # Sum all daily usage values in the billing period
                     current_bill_usage = sum(
-                        float(stat.get("state", 0)) for stat in stats[stat_id]
+                        float(stat.get("state", 0) or 0) for stat in stats[stat_id]
                     )
                     self.logger.debug(
                         "Calculated current billing period usage from statistics: %.2f gallons from %d days",

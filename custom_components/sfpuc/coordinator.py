@@ -633,11 +633,12 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch historical data going back months/years on first run.
 
         Populates recorder statistics with:
-        - Daily usage data for the past 2 years
-        - Hourly usage data for the past 30 days
+        - Monthly billed usage data for the past 2 years (billing cycle data)
+        - Daily usage data for the past 2 years (comprehensive historical data)
+        - Hourly usage data for the past 30 days (most detailed recent data)
 
-        Note: Monthly billing cycle data is skipped as SFPUC billing cycles
-        do not align with calendar months (typically 25th-25th).
+        Monthly data represents actual billing periods (typically 25th-25th)
+        and provides valuable year-over-year comparison data.
 
         Logs warnings if data retrieval fails but does not raise exceptions
         to avoid blocking the initial coordinator setup.
@@ -649,14 +650,22 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             end_date = datetime.now()
             loop = asyncio.get_event_loop()
 
-            # Skip monthly data fetching - SFPUC provides billing cycle data (25th-25th)
-            # which doesn't align with calendar months and may be confusing for users
-            self.logger.info(
-                "Skipping monthly historical data fetch - using daily data for historical trends"
+            # Fetch monthly billed usage data - all available history
+            self.logger.info("Fetching monthly billed usage data...")
+            # SFPUC typically has 2+ years of billing history
+            start_date = end_date - timedelta(days=730)  # 2 years back
+            monthly_data = await loop.run_in_executor(
+                None, self.scraper.get_usage_data, start_date, end_date, "monthly"
             )
+            if monthly_data:
+                await self._async_insert_statistics(monthly_data)
+                self.logger.info(
+                    "Fetched %d monthly billing data points", len(monthly_data)
+                )
+            else:
+                self.logger.warning("No monthly billing data retrieved")
 
             # Fetch daily data for the past 2 years (comprehensive historical data)
-            start_date = end_date - timedelta(days=730)
             self.logger.debug(
                 "Fetching daily data from %s to %s", start_date.date(), end_date.date()
             )
@@ -854,7 +863,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     account_number.lower().replace("-", "_").replace(" ", "_")
                 )
                 stat_id = f"{DOMAIN}:{safe_account}_water_monthly_consumption"
-                name = "San Francisco Water Power Sewer Monthly Usage"
+                name = "San Francisco Water Power Sewer Monthly Billed Usage"
                 has_sum = True
             else:
                 self.logger.error("Unknown resolution for statistics: %s", resolution)

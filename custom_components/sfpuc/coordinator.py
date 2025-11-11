@@ -746,7 +746,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Group data by resolution (skip monthly data)
             hourly_data = []
             daily_data = []
-            # monthly_data = []  # Disabled - billing cycles don't align with calendar months
+            monthly_data = []  # Enabled - billing cycles are now supported
 
             for item in usage_data:
                 resolution = item.get("resolution", "daily")
@@ -754,13 +754,14 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     hourly_data.append(item)
                 elif resolution == "daily":
                     daily_data.append(item)
-                # elif resolution == "monthly":  # Disabled
-                #     monthly_data.append(item)
+                elif resolution == "monthly":
+                    monthly_data.append(item)
 
             self.logger.debug(
-                "Grouped data - Hourly: %d, Daily: %d",
+                "Grouped data - Hourly: %d, Daily: %d, Monthly: %d",
                 len(hourly_data),
                 len(daily_data),
+                len(monthly_data),
             )
 
             # Insert statistics for each resolution
@@ -768,8 +769,8 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self._async_insert_resolution_statistics(hourly_data, "hourly")
             if daily_data:
                 await self._async_insert_resolution_statistics(daily_data, "daily")
-            # if monthly_data:  # Disabled
-            #     await self._async_insert_resolution_statistics(monthly_data, "monthly")
+            if monthly_data:
+                await self._async_insert_resolution_statistics(monthly_data, "monthly")
 
         except Exception as err:
             self.logger.warning("Failed to insert water usage statistics: %s", err)
@@ -798,14 +799,35 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             # Create statistic metadata based on resolution
             if resolution == "hourly":
-                stat_id = f"{DOMAIN}:hourly_usage"
+                # Include account number in statistic ID for multi-account support
+                account_number = self.config_entry.data.get(CONF_USERNAME, "default")
+                # Sanitize account number (lowercase, replace special chars)
+                safe_account = (
+                    account_number.lower().replace("-", "_").replace(" ", "_")
+                )
+                stat_id = f"{DOMAIN}:{safe_account}_water_hourly_consumption"
                 name = "San Francisco Water Power Sewer Hourly Usage"
                 has_sum = True
             elif resolution == "daily":
-                stat_id = f"{DOMAIN}:daily_usage"
+                # Include account number in statistic ID for multi-account support
+                account_number = self.config_entry.data.get(CONF_USERNAME, "default")
+                # Sanitize account number (lowercase, replace special chars)
+                safe_account = (
+                    account_number.lower().replace("-", "_").replace(" ", "_")
+                )
+                stat_id = f"{DOMAIN}:{safe_account}_water_daily_consumption"
                 name = "San Francisco Water Power Sewer Daily Usage"
                 has_sum = True
-            # Monthly statistics disabled - SFPUC billing cycles don't align with calendar months
+            elif resolution == "monthly":
+                # Include account number in statistic ID for multi-account support
+                account_number = self.config_entry.data.get(CONF_USERNAME, "default")
+                # Sanitize account number (lowercase, replace special chars)
+                safe_account = (
+                    account_number.lower().replace("-", "_").replace(" ", "_")
+                )
+                stat_id = f"{DOMAIN}:{safe_account}_water_monthly_consumption"
+                name = "San Francisco Water Power Sewer Monthly Usage"
+                has_sum = True
             else:
                 self.logger.error("Unknown resolution for statistics: %s", resolution)
                 return
@@ -833,10 +855,10 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     start_time = timestamp.replace(
                         hour=0, minute=0, second=0, microsecond=0
                     )
-                # elif resolution == "monthly":  # Disabled - billing cycles don't align with calendar months
-                #     start_time = timestamp.replace(
-                #         day=1, hour=0, minute=0, second=0, microsecond=0
-                #     )
+                elif resolution == "monthly":
+                    start_time = timestamp.replace(
+                        day=1, hour=0, minute=0, second=0, microsecond=0
+                    )
 
                 # Convert naive timestamp to timezone-aware (assume PST/PDT for SF)
                 if start_time.tzinfo is None:
@@ -884,13 +906,17 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """
         try:
             # Create statistic metadata for daily water usage
+            # Include account number in statistic ID for multi-account support
+            account_number = self.config_entry.data.get(CONF_USERNAME, "default")
+            # Sanitize account number (lowercase, replace special chars)
+            safe_account = account_number.lower().replace("-", "_").replace(" ", "_")
             metadata = StatisticMetaData(  # type: ignore[typeddict-item]
                 has_mean=False,
                 has_sum=True,
                 mean_type=StatisticMeanType.NONE,
                 name="San Francisco Water Power Sewer Daily Usage",
                 source=DOMAIN,
-                statistic_id=f"{DOMAIN}:daily_usage",
+                statistic_id=f"{DOMAIN}:{safe_account}_water_daily_consumption",
                 unit_of_measurement=UnitOfVolume.GALLONS,
             )
 

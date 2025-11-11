@@ -22,7 +22,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import CONF_USERNAME, DOMAIN
 from .coordinator import SFWaterCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,42 +43,24 @@ class SFWaterEntityDescription(SensorEntityDescription):
 
 # Water usage sensors
 WATER_SENSORS: tuple[SFWaterEntityDescription, ...] = (
+    # Primary sensor: Current billing period usage to date
     SFWaterEntityDescription(
-        key="daily_usage",
-        translation_key="daily_usage",
+        key="current_bill_water_usage_to_date",
+        translation_key="current_bill_water_usage_to_date",
         device_class=SensorDeviceClass.WATER,
         native_unit_of_measurement=UnitOfVolume.GALLONS,
         state_class=SensorStateClass.TOTAL,
         suggested_display_precision=1,
-        value_fn=lambda data: data.get("daily_usage", 0),
+        value_fn=lambda data: data.get("current_bill_usage", 0),
     ),
-    SFWaterEntityDescription(
-        key="hourly_usage",
-        translation_key="hourly_usage",
-        device_class=SensorDeviceClass.WATER,
-        native_unit_of_measurement=UnitOfVolume.GALLONS,
-        state_class=SensorStateClass.TOTAL,
-        suggested_display_precision=2,
-        value_fn=lambda data: data.get("hourly_usage", 0),
-    ),
-    SFWaterEntityDescription(
-        key="monthly_usage",
-        translation_key="monthly_usage",
-        device_class=SensorDeviceClass.WATER,
-        native_unit_of_measurement=UnitOfVolume.GALLONS,
-        state_class=SensorStateClass.TOTAL,
-        suggested_display_precision=1,
-        value_fn=lambda data: data.get("monthly_usage", 0),
-    ),
-    # TODO: Add more sensors like usage_to_date, forecasted_usage, etc.
 )
 
 
 class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
     """San Francisco Water Power Sewer sensor entity.
 
-    Displays current water usage data fetched by the coordinator.
-    Creates separate entities for daily, hourly, and monthly usage.
+    Displays current billing period water usage data fetched by the coordinator.
+    Creates a single primary sensor showing cumulative usage since last bill.
     """
 
     entity_description: SFWaterEntityDescription
@@ -97,7 +79,9 @@ class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
         super().__init__(coordinator)
         self.entity_description = description
         config_entry = cast(ConfigEntry[Any], coordinator.config_entry)
-        self._attr_unique_id = f"{config_entry.entry_id}_{description.key}"
+        # Generate unique_id that creates the proper entity_id
+        account_number = coordinator.config_entry.data.get(CONF_USERNAME, "unknown")
+        self._attr_unique_id = f"water_account_{account_number}_{description.key}"
         self._attr_device_info = DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
             identifiers={(DOMAIN, config_entry.entry_id)},
@@ -126,8 +110,8 @@ async def async_setup_entry(
 ) -> None:
     """Set up San Francisco Water Power Sewer sensors.
 
-    Creates sensor entities for daily, hourly, and monthly water usage
-    from the coordinator and adds them to Home Assistant.
+    Creates a single primary sensor entity showing current billing period
+    water usage from the coordinator and adds it to Home Assistant.
 
     Args:
         hass: Home Assistant instance.

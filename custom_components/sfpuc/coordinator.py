@@ -485,6 +485,45 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_backfill_date: datetime | None = None
         self._historical_data_fetched = False
 
+    def _calculate_billing_period(self) -> tuple[datetime, datetime]:
+        """Calculate current SFPUC billing period dates.
+
+        SFPUC typically bills on the 25th of each month based on sample data.
+        This could be made dynamic by parsing billing dates from monthly data.
+
+        Returns:
+            Tuple of (bill_start_date, bill_end_date)
+        """
+        # TODO: Make billing day dynamic by parsing from monthly billing data
+        # For now, use 25th as observed in sample data (May 25, Jun 25, Jul 25)
+        billing_day = 25
+
+        today = datetime.now()
+        current_month_bill_date = today.replace(
+            day=billing_day, hour=0, minute=0, second=0, microsecond=0
+        )
+
+        if today.day < billing_day:
+            # Haven't hit this month's bill date yet
+            # Period started last month's billing day
+            if today.month == 1:
+                bill_start = current_month_bill_date.replace(
+                    year=today.year - 1, month=12
+                )
+            else:
+                bill_start = current_month_bill_date.replace(month=today.month - 1)
+            bill_end = current_month_bill_date
+        else:
+            # Past this month's bill date
+            # Period started this month's billing day
+            bill_start = current_month_bill_date
+            if today.month == 12:
+                bill_end = current_month_bill_date.replace(year=today.year + 1, month=1)
+            else:
+                bill_end = current_month_bill_date.replace(month=today.month + 1)
+
+        return bill_start, bill_end
+
     def update_credentials(self, username: str, password: str) -> None:
         """Update the scraper credentials.
 
@@ -504,15 +543,13 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         1. Authenticates with the SFPUC portal
         2. Fetches historical data on first run
         3. Performs data backfilling for the past 30 days
-        4. Retrieves current daily, hourly, and monthly usage
+        4. Calculates current billing period usage (from 25th to today)
         5. Inserts statistics into Home Assistant recorder
-        6. Returns current usage values for sensor entities
+        6. Returns current billing period usage for the sensor
 
         Returns:
             Dictionary containing current usage data with keys:
-            - daily_usage: Total usage for the current day in gallons
-            - hourly_usage: Usage for the most recent hour in gallons
-            - monthly_usage: Total usage for the current month in gallons
+            - current_bill_usage: Cumulative usage for current billing period in gallons
             - last_updated: Timestamp of the update
 
         Raises:
@@ -541,66 +578,46 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Perform backfilling if needed (30-day lookback)
             await self._async_backfill_missing_data()
 
-            # Get current daily usage
-            today = datetime.now()
-            self.logger.debug("Fetching current daily usage data for %s", today.date())
-            daily_data = await loop.run_in_executor(
-                None, self.scraper.get_usage_data, today, today, "hourly"
-            )
-
-            if not daily_data:
-                self.logger.error("Failed to retrieve current usage data")
-                raise UpdateFailed("Failed to retrieve current usage data")
-
-            # Sum hourly data for daily total
-            daily_usage = sum(item["usage"] for item in daily_data)
+            # Calculate billing period dates (SFPUC bills ~25th of each month)
+            bill_start, bill_end = self._calculate_billing_period()
             self.logger.debug(
-                "Calculated daily usage: %.2f gallons from %d hourly readings",
-                daily_usage,
-                len(daily_data),
+                "Current billing period: %s to %s",
+                bill_start.date(),
+                bill_end.date(),
             )
 
-            # Get latest hourly usage (most recent hour)
-            hourly_usage = daily_data[-1]["usage"] if daily_data else 0
-            self.logger.debug("Latest hourly usage: %.2f gallons", hourly_usage)
-
-            # Get current monthly usage (sum of daily data this month)
-            start_of_month = today.replace(
-                day=1, hour=0, minute=0, second=0, microsecond=0
+            # Fetch usage for current billing period (accumulated since last bill date)
+            self.logger.debug(
+                "Fetching current billing period usage data from %s to %s",
+                bill_start.date(),
+                datetime.now().date(),
+            )
+            period_data = await loop.run_in_executor(
+                None, self.scraper.get_usage_data, bill_start, datetime.now(), "daily"
+            )
+            current_bill_usage = (
+                sum(item["usage"] for item in period_data) if period_data else 0
             )
             self.logger.debug(
-                "Fetching monthly usage data from %s to %s",
-                start_of_month.date(),
-                today.date(),
-            )
-            monthly_data = await loop.run_in_executor(
-                None, self.scraper.get_usage_data, start_of_month, today, "daily"
-            )
-            monthly_usage = (
-                sum(item["usage"] for item in monthly_data) if monthly_data else 0
-            )
-            self.logger.debug(
-                "Calculated monthly usage: %.2f gallons from %d daily readings",
-                monthly_usage,
-                len(monthly_data) if monthly_data else 0,
+                "Calculated current billing period usage: %.2f gallons from %d daily readings",
+                current_bill_usage,
+                len(period_data) if period_data else 0,
             )
 
+            # Return simplified data for the single sensor
             data = {
-                "daily_usage": daily_usage,
-                "hourly_usage": hourly_usage,
-                "monthly_usage": monthly_usage,
+                "current_bill_usage": current_bill_usage,
                 "last_updated": datetime.now(),
             }
 
-            # Insert current statistics
-            self.logger.debug("Inserting current statistics")
-            await self._async_insert_statistics(daily_data)
+            # Insert current statistics (daily data for the current period)
+            if period_data:
+                self.logger.debug("Inserting current period statistics")
+                await self._async_insert_statistics(period_data)
 
             self.logger.info(
-                "Data update completed successfully - Daily: %.2f, Hourly: %.2f, Monthly: %.2f",
-                daily_usage,
-                hourly_usage,
-                monthly_usage,
+                "Data update completed successfully - Current billing period usage: %.2f gallons",
+                current_bill_usage,
             )
             return data
 

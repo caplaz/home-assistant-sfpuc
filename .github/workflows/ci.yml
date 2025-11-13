@@ -150,7 +150,7 @@ jobs:
           pip install --only-binary=aiohttp,yarl,multidict homeassistant==${{ matrix.home-assistant-version }}
 
           # Install dev dependencies
-          pip install --only-binary=all requests>=2.25.1 beautifulsoup4>=4.9.3 voluptuous>=0.13.1 pytest>=7.0.0 pytest-asyncio>=0.21.0 pytest-cov>=4.0.0 black>=23.0.0 isort>=5.12.0 flake8>=6.0.0 mypy>=1.0.0 bandit>=1.7.0 pre-commit>=3.0.0 types-requests>=2.25.0 markdown>=3.4.0 pytest-homeassistant-custom-component>=0.13.0
+          pip install --only-binary=all -r requirements-dev.txt
 
       - name: Run tests
         run: |

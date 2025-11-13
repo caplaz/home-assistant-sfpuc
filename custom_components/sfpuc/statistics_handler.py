@@ -146,6 +146,7 @@ async def async_insert_resolution_statistics(
             name=name,
             source=DOMAIN,
             statistic_id=stat_id,
+            unit_class="volume",
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
 
@@ -180,7 +181,7 @@ async def async_insert_resolution_statistics(
             # Get time boundaries
             earliest_existing_time = sorted_stats[0]["start"]
             # Continue from last sum (only valid when appending after existing data)
-            cumulative_sum = sorted_stats[-1].get("sum", 0.0)
+            cumulative_sum = sorted_stats[-1].get("sum") or 0.0
             coordinator.logger.debug(
                 "Found %d existing %s statistics (from %s to %s), latest sum: %.2f",
                 len(existing_timestamps),
@@ -331,6 +332,7 @@ async def async_insert_legacy_statistics(coordinator, daily_usage: float) -> Non
             name="San Francisco Water Power Sewer",
             source=DOMAIN,
             statistic_id=f"{DOMAIN}:{safe_account}_water_consumption",
+            unit_class="volume",
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
 

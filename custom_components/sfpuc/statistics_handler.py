@@ -143,9 +143,13 @@ async def async_insert_resolution_statistics(
             name=name,
             source=DOMAIN,
             statistic_id=stat_id,
-            unit_class="volume",
+            unit_class=None,
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
+
+        # Set unit_class for HA versions that support it
+        if "unit_class" in StatisticMetaData.__annotations__:
+            metadata["unit_class"] = "volume"
 
         # Create statistic data points
         statistic_data = []
@@ -241,9 +245,13 @@ async def async_insert_legacy_statistics(coordinator, daily_usage: float) -> Non
             name="San Francisco Water Power Sewer",
             source=DOMAIN,
             statistic_id=f"{DOMAIN}:{safe_account}_water_consumption",
-            unit_class="volume",
+            unit_class=None,
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
+
+        # Set unit_class for HA versions that support it
+        if "unit_class" in StatisticMetaData.__annotations__:
+            metadata["unit_class"] = "volume"
 
         # Get current date for the statistic
         now = dt_util.now()

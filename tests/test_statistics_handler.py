@@ -78,8 +78,10 @@ class TestStatisticsHandler:
 
         # Verify metadata contains required fields
         metadata = call_args[0][1]
-        assert metadata["unit_class"] == "volume"
         assert metadata["unit_of_measurement"] == "gal"
+        # unit_class may not be present in older HA versions
+        if "unit_class" in metadata:
+            assert metadata["unit_class"] == "volume"
 
     @pytest.mark.asyncio
     async def test_insert_statistics_monthly_data(self, hass, config_entry):

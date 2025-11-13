@@ -108,9 +108,9 @@ async def async_fetch_historical_data(coordinator) -> None:
 
         # Fetch daily data for the past 2 years (comprehensive historical data)
         # SFPUC limits daily data downloads to ~7-10 days, so we fetch in chunks
-        # Fetch from 2 years ago to 30 days ago (stops before hourly data period)
+        # Fetch from 2 years ago to 31 days ago (stops 1 day before hourly period for continuity)
         coordinator.logger.info(
-            "Fetching daily data in chunks (2 years to 30 days ago)..."
+            "Fetching daily data in chunks (2 years to 31 days ago)..."
         )
         try:
             all_daily_data = []
@@ -118,7 +118,7 @@ async def async_fetch_historical_data(coordinator) -> None:
             start_date_2yr = end_date_available - timedelta(
                 days=730
             )  # 2 years back from last available
-            end_date_daily = end_date_available - timedelta(days=30)  # Stop 30 days ago
+            end_date_daily = end_date_available - timedelta(days=31)  # Stop 31 days ago
             current_start = start_date_2yr
 
             while current_start < end_date_daily:
@@ -180,18 +180,19 @@ async def async_fetch_historical_data(coordinator) -> None:
         except Exception as err:
             coordinator.logger.warning("Failed to fetch daily data: %s", err)
 
-        # Fetch hourly data for the past 30 days (most detailed recent data)
-        # This fills in the gap between daily data (ends 30 days ago) and most recent available
+        # Fetch hourly data for the past 32 days (most detailed recent data)
+        # This fills in the gap between daily data (ends 31 days ago) and most recent available
+        # Starts 32 days ago to create 1-day overlap with daily data for seamless continuity
         # Fetches day-by-day to append after daily data in cumulative sum
         # Stops 2 days before today due to SFPUC data lag
-        coordinator.logger.info("Fetching hourly data for last 30 days...")
+        coordinator.logger.info("Fetching hourly data for last 32 days...")
         try:
             all_hourly_data = []
-            # Fetch from 30 days ago to 2 days ago (respecting SFPUC data lag)
-            days_back = 30
+            # Fetch from 32 days ago to 2 days ago (respecting SFPUC data lag)
+            # range(32, 1, -1) gives offsets 32..2, covering Oct 12 to Nov 11
 
             for days_offset in range(
-                days_back, 2, -1  # Start from 30 days ago, stop at 2 days ago
+                32, 1, -1  # Start from 32 days ago, stop at 2 days ago (inclusive)
             ):  # Stop at 2 days ago (SFPUC data lag)
                 fetch_date = end_date - timedelta(days=days_offset)
                 coordinator.logger.debug(
@@ -246,7 +247,7 @@ async def async_fetch_historical_data(coordinator) -> None:
             if all_hourly_data:
                 await async_insert_statistics(coordinator, all_hourly_data)
                 coordinator.logger.info(
-                    "Fetched %d hourly data points total for past 30 days",
+                    "Fetched %d hourly data points total for past 32 days",
                     len(all_hourly_data),
                 )
             else:

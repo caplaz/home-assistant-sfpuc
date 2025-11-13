@@ -31,8 +31,14 @@ class TestStatisticsHandler:
 
     @pytest.fixture(autouse=True)
     def mock_coordinator_timer(self):
-        """Mock coordinator timer to prevent lingering timers."""
-        with patch("asyncio.AbstractEventLoop.call_later", return_value=None):
+        """Mock coordinator timer and background tasks to prevent lingering timers."""
+        with (
+            patch("asyncio.AbstractEventLoop.call_later", return_value=None),
+            patch(
+                "custom_components.sfpuc.data_fetcher.async_background_historical_fetch",
+                return_value=None,
+            ),
+        ):
             yield
 
     def teardown_method(self):

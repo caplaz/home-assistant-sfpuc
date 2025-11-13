@@ -192,12 +192,15 @@ async def async_fetch_historical_data(coordinator) -> None:
             # range(32, 1, -1) gives offsets 32..2, covering Oct 12 to Nov 11
 
             for days_offset in range(
-                32, 1, -1  # Start from 32 days ago, stop at 2 days ago (inclusive)
+                32,
+                1,
+                -1,  # Start from 32 days ago, stop at 2 days ago (inclusive of offset 2 = today-2)
             ):  # Stop at 2 days ago (SFPUC data lag)
                 fetch_date = end_date - timedelta(days=days_offset)
                 coordinator.logger.debug(
-                    "Fetching hourly data for %s",
+                    "Fetching hourly data for %s (offset %d days back)",
                     fetch_date.date(),
+                    days_offset,
                 )
 
                 # Retry logic for network errors

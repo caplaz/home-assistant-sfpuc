@@ -174,7 +174,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 datetime.now().date(),
             )
 
-            # Get daily statistics for the current billing period
+            # Get hourly statistics for the current billing period
             safe_account = (
                 self.config_entry.data.get(CONF_USERNAME, "unknown")
                 .replace("-", "_")
@@ -183,25 +183,26 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             stat_id = f"{DOMAIN}:{safe_account}_water_consumption"
 
             try:
-                # Fetch statistics from bill_start to now
+                # Fetch hourly statistics from bill_start to now
+                # We query with period="hour" since we store hourly granularity data
                 stats = await get_instance(self.hass).async_add_executor_job(
                     statistics_during_period,
                     self.hass,
                     dt_util.as_utc(bill_start),
                     dt_util.as_utc(datetime.now()),
                     {stat_id},
-                    "day",
+                    "hour",
                     None,
                     {"state"},
                 )
 
                 if stats and stat_id in stats:
-                    # Sum all daily usage values in the billing period
+                    # Sum all hourly usage values in the billing period
                     current_bill_usage = sum(
                         float(stat.get("state", 0) or 0) for stat in stats[stat_id]
                     )
                     self.logger.debug(
-                        "Calculated current billing period usage from statistics: %.2f gallons from %d days",
+                        "Calculated current billing period usage from statistics: %.2f gallons from %d hourly records",
                         current_bill_usage,
                         len(stats[stat_id]),
                     )

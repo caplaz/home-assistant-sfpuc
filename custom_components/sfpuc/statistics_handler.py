@@ -137,13 +137,11 @@ async def async_insert_resolution_statistics(
         has_sum = True
 
         metadata = StatisticMetaData(
-            has_mean=False,
             has_sum=has_sum,
             mean_type=StatisticMeanType.NONE,
             name=name,
             source=DOMAIN,
             statistic_id=stat_id,
-            unit_class="volume",
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
 
@@ -235,13 +233,11 @@ async def async_insert_legacy_statistics(coordinator, daily_usage: float) -> Non
         # Sanitize account number (lowercase, replace special chars)
         safe_account = account_number.lower().replace("-", "_").replace(" ", "_")
         metadata = StatisticMetaData(
-            has_mean=False,
             has_sum=True,
             mean_type=StatisticMeanType.NONE,
             name="San Francisco Water Power Sewer",
             source=DOMAIN,
             statistic_id=f"{DOMAIN}:{safe_account}_water_consumption",
-            unit_class="volume",
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
 

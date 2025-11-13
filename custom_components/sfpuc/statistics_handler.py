@@ -3,12 +3,16 @@
 from typing import Any
 import zoneinfo
 
+from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.models import (
     StatisticData,
     StatisticMeanType,
     StatisticMetaData,
 )
-from homeassistant.components.recorder.statistics import async_add_external_statistics
+from homeassistant.components.recorder.statistics import (
+    async_add_external_statistics,
+    statistics_during_period,
+)
 from homeassistant.components.recorder.util import DATA_INSTANCE
 from homeassistant.const import UnitOfVolume
 from homeassistant.util import dt as dt_util
@@ -145,9 +149,54 @@ async def async_insert_resolution_statistics(
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
 
+        # Get existing statistics to detect duplicates and continue cumulative sum
+        # Query the past 3 years to cover all potential overlaps
+        from datetime import timedelta
+
+        end_time = dt_util.now()
+        start_time_query = end_time - timedelta(days=365 * 3)
+
+        existing_stats = await get_instance(coordinator.hass).async_add_executor_job(
+            statistics_during_period,
+            coordinator.hass,
+            start_time_query,
+            end_time,
+            {stat_id},
+            "hour",  # Use hour period for detailed duplicate detection
+            None,  # units
+            {"sum"},  # types - we only need sum for continuation
+        )
+
+        # Build set of existing timestamps (as Unix timestamps) for exact duplicate detection
+        existing_timestamps = set()
+        cumulative_sum = 0.0
+        earliest_existing_time = None
+
+        if stat_id in existing_stats and existing_stats[stat_id]:
+            # Sort by timestamp to get latest sum and time boundaries
+            sorted_stats = sorted(existing_stats[stat_id], key=lambda x: x["start"])
+            # Store timestamps as Unix timestamps for precise comparison
+            existing_timestamps = {stat["start"] for stat in sorted_stats}
+            # Get time boundaries
+            earliest_existing_time = sorted_stats[0]["start"]
+            # Continue from last sum (only valid when appending after existing data)
+            cumulative_sum = sorted_stats[-1].get("sum", 0.0)
+            coordinator.logger.debug(
+                "Found %d existing %s statistics (from %s to %s), latest sum: %.2f",
+                len(existing_timestamps),
+                resolution,
+                sorted_stats[0]["start"],
+                sorted_stats[-1]["start"],
+                cumulative_sum,
+            )
+        else:
+            coordinator.logger.debug(
+                "No existing statistics found, starting fresh for %s", resolution
+            )
+
         # Create statistic data points
         statistic_data = []
-        cumulative_sum = 0.0  # Track cumulative sum for Energy Dashboard
+        skipped_older_than_existing = 0
 
         for point in data_points:
             timestamp = point["timestamp"]
@@ -178,6 +227,24 @@ async def async_insert_resolution_statistics(
                 # Already timezone-aware, convert to UTC
                 start_time = dt_util.as_utc(start_time)
 
+            # Skip exact duplicate timestamps (already in database)
+            if start_time.timestamp() in existing_timestamps:
+                coordinator.logger.debug(
+                    "Skipping exact duplicate statistic at %s",
+                    start_time,
+                )
+                continue
+
+            # Skip data points older than existing statistics to prevent cumulative sum corruption
+            # When inserting historical data before existing data, we'd need to recalculate
+            # all existing cumulative sums, which HA doesn't support efficiently
+            if (
+                earliest_existing_time is not None
+                and start_time.timestamp() < earliest_existing_time
+            ):
+                skipped_older_than_existing += 1
+                continue
+
             # Accumulate sum for Energy Dashboard
             cumulative_sum += usage
 
@@ -191,8 +258,30 @@ async def async_insert_resolution_statistics(
             )
 
         # Insert statistics into Home Assistant recorder
+        if not statistic_data:
+            if skipped_older_than_existing > 0:
+                coordinator.logger.info(
+                    "Skipped %d %s statistics older than existing data (would corrupt cumulative sums)",
+                    skipped_older_than_existing,
+                    resolution,
+                )
+            else:
+                coordinator.logger.debug(
+                    "No new %s statistics to insert (all data points were duplicates)",
+                    resolution,
+                )
+            return
+
         coordinator.logger.debug(
-            "Adding %d %s statistics to recorder", len(statistic_data), resolution
+            "Adding %d new %s statistics to recorder (continuing from sum=%.2f)%s",
+            len(statistic_data),
+            resolution,
+            cumulative_sum - sum(s["state"] for s in statistic_data),
+            (
+                f", skipped {skipped_older_than_existing} older than existing"
+                if skipped_older_than_existing > 0
+                else ""
+            ),
         )
 
         # Check if recorder is available before inserting statistics
@@ -204,7 +293,11 @@ async def async_insert_resolution_statistics(
             return
 
         async_add_external_statistics(coordinator.hass, metadata, statistic_data)
-        coordinator.logger.debug("Successfully inserted %s statistics", resolution)
+        coordinator.logger.debug(
+            "Successfully inserted %s statistics, final sum: %.2f",
+            resolution,
+            cumulative_sum,
+        )
 
     except Exception as err:
         coordinator.logger.warning(

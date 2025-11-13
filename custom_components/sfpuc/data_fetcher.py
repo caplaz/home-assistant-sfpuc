@@ -72,10 +72,16 @@ async def async_fetch_historical_data(coordinator) -> None:
     initial setup to avoid blocking Home Assistant startup.
     """
     try:
-        coordinator.logger.info("Fetching historical water usage data in background...")
+        coordinator.logger.info("Background historical fetch started...")
 
-        # Fetch data at different resolutions
+        # Fetch data strategy for first sync (oldest to newest):
+        # 1. Daily data from 2 years ago to 30 days ago (historical baseline)
+        # 2. Hourly data from 30 days ago to 2 days ago (fills gap to most recent)
+        # Regular updates will only fetch new hourly data incrementally
+        # This approach builds cumulative sum naturally in chronological order
         end_date = datetime.now()
+        # SFPUC has ~2 day data lag - don't fetch today or yesterday
+        end_date_available = end_date - timedelta(days=2)
         loop = asyncio.get_event_loop()
 
         # Fetch monthly billed usage data - all available history
@@ -102,21 +108,27 @@ async def async_fetch_historical_data(coordinator) -> None:
 
         # Fetch daily data for the past 2 years (comprehensive historical data)
         # SFPUC limits daily data downloads to ~7-10 days, so we fetch in chunks
-        coordinator.logger.info("Fetching daily data in chunks...")
+        # Fetch from 2 years ago to 30 days ago (stops before hourly data period)
+        coordinator.logger.info(
+            "Fetching daily data in chunks (2 years to 30 days ago)..."
+        )
         try:
             all_daily_data = []
             chunk_days = 3  # Fetch 3 days at a time to reduce load
-            current_end = end_date
-            start_date_2yr = end_date - timedelta(days=730)  # 2 years back
+            start_date_2yr = end_date_available - timedelta(
+                days=730
+            )  # 2 years back from last available
+            end_date_daily = end_date_available - timedelta(days=30)  # Stop 30 days ago
+            current_start = start_date_2yr
 
-            while current_end > start_date_2yr:
-                chunk_start = max(
-                    current_end - timedelta(days=chunk_days), start_date_2yr
+            while current_start < end_date_daily:
+                chunk_end = min(
+                    current_start + timedelta(days=chunk_days), end_date_daily
                 )
                 coordinator.logger.debug(
                     "Fetching daily chunk from %s to %s",
-                    chunk_start.date(),
-                    current_end.date(),
+                    current_start.date(),
+                    chunk_end.date(),
                 )
 
                 # Retry logic for network errors
@@ -126,8 +138,8 @@ async def async_fetch_historical_data(coordinator) -> None:
                         chunk_data = await loop.run_in_executor(
                             None,
                             coordinator.scraper.get_usage_data,
-                            chunk_start,
-                            current_end,
+                            current_start,
+                            chunk_end,
                             "daily",
                         )
                         break  # Success, exit retry loop
@@ -154,7 +166,7 @@ async def async_fetch_historical_data(coordinator) -> None:
                         "Chunk returned %d data points", len(chunk_data)
                     )
 
-                current_end = chunk_start - timedelta(days=1)
+                current_start = chunk_end + timedelta(days=1)
                 # Small delay to avoid overwhelming the server
                 await asyncio.sleep(1.0)
 
@@ -169,18 +181,18 @@ async def async_fetch_historical_data(coordinator) -> None:
             coordinator.logger.warning("Failed to fetch daily data: %s", err)
 
         # Fetch hourly data for the past 30 days (most detailed recent data)
-        # SFPUC allows hourly data only for recent dates (typically up to 2 days ago)
-        # Fetch in chunks to get complete 30-day hourly history
-        coordinator.logger.info("Fetching hourly data in chunks...")
+        # This fills in the gap between daily data (ends 30 days ago) and most recent available
+        # Fetches day-by-day to append after daily data in cumulative sum
+        # Stops 2 days before today due to SFPUC data lag
+        coordinator.logger.info("Fetching hourly data for last 30 days...")
         try:
             all_hourly_data = []
-            # Hourly data is available up to ~2 days ago
-            # We'll try to fetch 30 days worth, one day at a time
+            # Fetch from 30 days ago to 2 days ago (respecting SFPUC data lag)
             days_back = 30
 
             for days_offset in range(
-                2, days_back + 2
-            ):  # Start from 2 days ago, go back 30 days
+                days_back, 2, -1  # Start from 30 days ago, stop at 2 days ago
+            ):  # Stop at 2 days ago (SFPUC data lag)
                 fetch_date = end_date - timedelta(days=days_offset)
                 coordinator.logger.debug(
                     "Fetching hourly data for %s",
@@ -271,83 +283,78 @@ async def async_background_historical_fetch(coordinator) -> None:
 
 
 async def async_backfill_missing_data(coordinator) -> None:
-    """Backfill missing data with 30-day lookback window.
+    """Fetch only new hourly data since last update.
 
-    Runs daily to ensure complete historical data in recorder by:
-    1. Checking for missing daily data in the past 30 days
-    2. Checking for missing hourly data in the past 7 days
-    3. Inserting any missing data points into statistics
+    Regular update strategy (runs every 12 hours):
+    1. Find the latest statistic timestamp in the database
+    2. Fetch only NEW hourly data from that timestamp to 2 days ago (SFPUC data lag)
+    3. Insert new data points (cumulative sum continues from last value)
 
-    Throttled to run at most once per 24 hours to avoid excessive
-    API calls to SFPUC portal.
+    This avoids re-fetching historical data and only appends the latest usage.
+    Respects SFPUC's 2-day data lag.
+    Throttled to run at most once per 12 hours.
 
-    Logs warnings if backfilling fails but does not raise exceptions.
+    Logs warnings if fetch fails but does not raise exceptions.
     """
     try:
         now = datetime.now()
+        # SFPUC has ~2 day data lag
+        end_date_available = now - timedelta(days=2)
 
-        # Check if we need to backfill (run this less frequently)
+        # Check if we need to update (run every 12 hours)
         if coordinator._last_backfill_date and (
             now - coordinator._last_backfill_date
-        ) < timedelta(hours=24):
+        ) < timedelta(hours=12):
             return
 
-        coordinator.logger.debug("Checking for missing data to backfill...")
+        coordinator.logger.debug("Fetching new hourly data since last update...")
 
-        # Look back 30 days for any missing data
-        lookback_date = now - timedelta(days=30)
+        # Get the latest statistic timestamp from database
+        from homeassistant.components.recorder.statistics import get_last_statistics
+
+        safe_account = (
+            coordinator.config_entry.data.get(CONF_USERNAME, "unknown")
+            .replace("-", "_")
+            .lower()
+        )
+        stat_id = f"{DOMAIN}:{safe_account}_water_consumption"
+
+        last_stat = await get_instance(coordinator.hass).async_add_executor_job(
+            get_last_statistics, coordinator.hass, 1, stat_id, True, set()
+        )
+
+        # Determine start date for fetch
+        if last_stat and stat_id in last_stat:
+            last_timestamp = last_stat[stat_id][0]["start"]
+            # Convert timestamp to datetime and add 1 hour to avoid duplicate
+            from datetime import datetime as dt
+
+            start_date = dt.fromtimestamp(last_timestamp) + timedelta(hours=1)
+            coordinator.logger.debug(
+                "Latest statistic: %s, fetching data since then",
+                dt.fromtimestamp(last_timestamp),
+            )
+        else:
+            # No existing data - skip backfill on first sync
+            # The background historical fetch will handle initial data population
+            coordinator.logger.debug(
+                "No existing statistics, skipping backfill (handled by background fetch)"
+            )
+            return
 
         loop = asyncio.get_event_loop()
 
-        # Check for missing daily data in the lookback period
+        # Fetch only NEW hourly data since last statistic (up to 2 days ago)
+        coordinator.logger.info(
+            f"Fetching new hourly data from {start_date.date()} to {end_date_available.date()}..."
+        )
         try:
-            # Retry logic for network errors
-            max_retries = 3
-            daily_data = None
-            for attempt in range(max_retries):
-                try:
-                    daily_data = await loop.run_in_executor(
-                        None,
-                        coordinator.scraper.get_usage_data,
-                        lookback_date,
-                        now,
-                        "daily",
-                    )
-                    break  # Success
-                except Exception as err:
-                    if attempt < max_retries - 1:
-                        coordinator.logger.warning(
-                            "Failed to fetch daily backfill data (attempt %d/%d): %s, retrying...",
-                            attempt + 1,
-                            max_retries,
-                            err,
-                        )
-                        await asyncio.sleep(2**attempt)  # Exponential backoff
-                    else:
-                        coordinator.logger.error(
-                            "Failed to fetch daily backfill data after %d attempts: %s",
-                            max_retries,
-                            err,
-                        )
-                        raise
+            # Fetch hourly data from start_date to end_date_available, one day at a time
+            hourly_data_all = []
+            current_date = start_date
 
-            if daily_data:
-                await async_insert_statistics(coordinator, daily_data)
-                coordinator.logger.debug(
-                    "Backfilled %d daily data points", len(daily_data)
-                )
-            else:
-                coordinator.logger.debug("No daily data found for backfilling")
-        except Exception as err:
-            coordinator.logger.warning("Failed to backfill daily data: %s", err)
-
-        # Check for missing hourly data in the recent past (last 7 days)
-        # Fetch day by day since SFPUC hourly data doesn't work well with date ranges
-        try:
-            all_hourly_data = []
-            # Fetch hourly data from 2 days ago back to 7 days ago
-            for days_offset in range(2, 9):  # 2 days ago to 8 days ago (7 days of data)
-                fetch_date = now - timedelta(days=days_offset)
+            while current_date.date() <= end_date_available.date():
+                fetch_date = current_date
 
                 # Retry logic for network errors
                 max_retries = 3
@@ -365,37 +372,39 @@ async def async_backfill_missing_data(coordinator) -> None:
                     except Exception as err:
                         if attempt < max_retries - 1:
                             coordinator.logger.warning(
-                                "Failed to fetch hourly backfill for %s (attempt %d/%d): %s, retrying...",
+                                "Failed to fetch hourly data for %s (attempt %d/%d): %s, retrying...",
                                 fetch_date.date(),
                                 attempt + 1,
                                 max_retries,
                                 err,
                             )
-                            await asyncio.sleep(2**attempt)  # Exponential backoff
+                            await asyncio.sleep(2**attempt)
                         else:
                             coordinator.logger.error(
-                                "Failed to fetch hourly backfill for %s after %d attempts: %s",
+                                "Failed to fetch hourly data for %s after %d attempts: %s",
                                 fetch_date.date(),
                                 max_retries,
                                 err,
                             )
-                            # Continue to next day
 
                 if hourly_chunk:
-                    all_hourly_data.extend(hourly_chunk)
+                    hourly_data_all.extend(hourly_chunk)
+
+                # Move to next day
+                current_date += timedelta(days=1)
                 await asyncio.sleep(0.5)  # Small delay
 
-            if all_hourly_data:
-                await async_insert_statistics(coordinator, all_hourly_data)
-                coordinator.logger.debug(
-                    "Backfilled %d hourly data points", len(all_hourly_data)
+            if hourly_data_all:
+                await async_insert_statistics(coordinator, hourly_data_all)
+                coordinator.logger.info(
+                    "Fetched %d new hourly data points", len(hourly_data_all)
                 )
             else:
-                coordinator.logger.debug("No hourly data found for backfilling")
+                coordinator.logger.debug("No new hourly data found")
         except Exception as err:
-            coordinator.logger.warning("Failed to backfill hourly data: %s", err)
+            coordinator.logger.warning("Failed to fetch new hourly data: %s", err)
 
         coordinator._last_backfill_date = now
 
     except Exception as err:
-        coordinator.logger.warning("Failed to backfill missing data: %s", err)
+        coordinator.logger.warning("Failed to update with new data: %s", err)

@@ -147,6 +147,10 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
    - Go to Settings → System → Restart
    - Wait for Home Assistant to restart
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
+
 ## Configuration
 
 ### Initial Setup
@@ -312,28 +316,6 @@ The integration follows Home Assistant best practices with a modern statistics-f
 - Parses data locally without external API calls
 - Respects SFPUC's terms of service and rate limits
 
-## Changelog
-
-### v1.0.0+ (Latest)
-
-**Major Refactoring & Bug Fixes:**
-
-- **🏗️ Single Sensor Architecture**: Refactored to single primary sensor per account
-- **📊 Statistics Sum Fix**: Fixed critical bug where cumulative sum values were missing, preventing Energy Dashboard display
-- **🕐 Timezone Bug Fix**: Corrected timestamp handling for San Francisco local time (was 8 hours off)
-- **⚡ Startup Optimization**: Deferred historical data fetching to background, preventing slow Home Assistant startups
-- **🧠 Smart Re-fetch Prevention**: Added logic to check for existing data and skip redundant downloads on restart
-- **📅 Monthly Historical Data**: Enabled billing cycle data for comprehensive historical analysis
-- **🔧 Type Safety**: Fixed mypy type errors and improved code quality
-- **🧹 Code Cleanup**: Removed unused wrapper methods and consolidated scraper functionality
-
-**Technical Improvements:**
-
-- Statistics-first approach with proper cumulative sum calculations
-- Consolidated statistics streams for all resolutions
-- Improved error handling and logging
-- Better separation of concerns between coordinator and data fetching
-
 ## Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -361,10 +343,6 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
 
 ---
 

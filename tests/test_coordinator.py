@@ -31,6 +31,7 @@ class TestSFWaterCoordinator:
         """Mock coordinator timer and background tasks to prevent lingering timers."""
         with (
             patch("asyncio.AbstractEventLoop.call_later", return_value=None),
+            patch("asyncio.create_task", return_value=None),
             patch(
                 "custom_components.sfpuc.data_fetcher.async_background_historical_fetch",
                 return_value=None,

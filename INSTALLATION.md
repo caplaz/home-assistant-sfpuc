@@ -64,7 +64,7 @@ Choose one of the following methods:
 
 **Option A: Download from GitHub Releases (Recommended)**
 
-1. Go to [GitHub Releases](https://github.com/caplaz/hass-sfpuc/releases)
+1. Go to [GitHub Releases](https://github.com/caplaz/home-assistant-sfpuc/releases)
 2. Download the latest release ZIP file
 3. Extract the ZIP file to a temporary location
 
@@ -72,8 +72,8 @@ Choose one of the following methods:
 
 ```bash
 # Clone the repository
-git clone https://github.com/caplaz/hass-sfpuc.git
-cd hass-sfpuc
+git clone https://github.com/caplaz/home-assistant-sfpuc.git
+cd home-assistant-sfpuc
 ```
 
 #### Step 2: Copy Files to Home Assistant
@@ -288,7 +288,7 @@ To remove the integration:
 If you encounter issues:
 
 1. Check the [troubleshooting section](#troubleshooting) above
-2. Review the [GitHub Issues](https://github.com/caplaz/hass-sfpuc/issues)
+2. Review the [GitHub Issues](https://github.com/caplaz/home-assistant-sfpuc/issues)
 3. Create a new issue with:
    - Home Assistant version
    - Integration version

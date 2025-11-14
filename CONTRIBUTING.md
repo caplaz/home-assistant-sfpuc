@@ -60,8 +60,8 @@ custom_components/sfpuc/
 
 ```bash
 # Clone the repository
-git clone https://github.com/caplaz/hass-sfpuc.git
-cd hass-sfpuc
+git clone https://github.com/caplaz/home-assistant-sfpuc.git
+cd home-assistant-sfpuc
 
 # Set up Python virtual environment
 python -m venv venv

@@ -12,8 +12,8 @@ This directory contains a Docker-based development environment for testing the S
 1. **Clone and setup the project:**
 
    ```bash
-   git clone https://github.com/caplaz/hass-sfpuc.git
-   cd hass-sfpuc
+   git clone https://github.com/caplaz/home-assistant-sfpuc.git
+   cd home-assistant-sfpuc
    ```
 
 2. **Start the development environment:**

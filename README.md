@@ -22,7 +22,7 @@ This is an unofficial, community-maintained integration that scrapes data from t
 - **Not responsible for any issues** that may arise from using this integration
 - **Please use responsibly** and in accordance with SFPUC's terms of service
 
-If the integration stops working, please check the [GitHub Issues](https://github.com/caplaz/hass-sfpuc/issues) for updates or create a new issue.
+If the integration stops working, please check the [GitHub Issues](https://github.com/caplaz/home-assistant-sfpuc/issues) for updates or create a new issue.
 
 ## How It Works
 
@@ -68,11 +68,13 @@ SFPUC Portal → Integration → Home Assistant → Energy Dashboard
    - Supports long-term usage trends and comparative analysis
 
 5. **Sensor Updates** 🔄
+
    - Updates sensors with latest data from each resolution
    - Provides real-time data to dashboards and automations
    - Maintains data availability and handles connection issues
 
 6. **Credential Management** 🔐
+
    - Automatic detection of credential expiration
    - Home Assistant repair notifications when credentials fail
    - Easy fix flow for updating credentials
@@ -128,7 +130,7 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 3. **Add Custom Repository**:
    - Click the three dots menu (⋮) in the top right
    - Select "Custom repositories"
-   - Add repository: `https://github.com/caplaz/hass-sfpuc`
+   - Add repository: `https://github.com/caplaz/home-assistant-sfpuc`
    - Category: `Integration`
    - Click "Add"
 4. **Search and Install**:
@@ -149,14 +151,14 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 1. **Download the Integration**:
 
    ```bash
-   wget https://github.com/caplaz/hass-sfpuc/archive/refs/tags/v1.0.0.zip
+   wget https://github.com/caplaz/home-assistant-sfpuc/archive/refs/tags/v1.0.0.zip
    unzip v1.0.0.zip
    ```
 
 2. **Copy Files**:
 
    ```bash
-   cp -r hass-sfpuc-1.0.0/custom_components/sfpuc /config/custom_components/
+   cp -r home-assistant-sfpuc-1.0.0/custom_components/sfpuc /config/custom_components/
    ```
 
 3. **Restart Home Assistant**:
@@ -301,18 +303,6 @@ The integration follows Home Assistant best practices with a modern statistics-f
 - **Config Flow**: User-friendly setup and configuration
 - **Error Handling**: Graceful failure recovery and logging
 
-### Recent Improvements
-
-#### v1.0.0+ (Latest)
-
-- **✅ Single Sensor Architecture**: Consolidated to one primary sensor per account
-- **✅ Statistics Sum Fix**: Fixed cumulative sum calculations for proper Energy Dashboard display
-- **✅ Timezone Bug Fix**: Corrected timestamp handling for San Francisco local time
-- **✅ Startup Optimization**: Deferred historical data fetching to background, preventing slow startups
-- **✅ Smart Re-fetch Prevention**: Checks for existing data to avoid redundant downloads on restart
-- **✅ Monthly Historical Data**: Enabled billing cycle data for comprehensive historical analysis
-- **✅ Type Safety**: Fixed mypy type errors and improved code quality
-
 ### Requirements
 
 - **Python Packages**:
@@ -341,8 +331,8 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/caplaz/hass-sfpuc.git
-   cd hass-sfpuc
+   git clone https://github.com/caplaz/home-assistant-sfpuc.git
+   cd home-assistant-sfpuc
    ```
 
 2. Install development dependencies:
@@ -366,11 +356,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [hacs]: https://github.com/hacs/integration
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/caplaz/hass-sfpuc.svg?style=for-the-badge
-[releases]: https://github.com/caplaz/hass-sfpuc/releases
-[ci-shield]: https://img.shields.io/github/actions/workflow/status/caplaz/hass-sfpuc/ci.yml?style=for-the-badge
-[ci]: https://github.com/caplaz/hass-sfpuc/actions/workflows/ci.yml
-[commits-shield]: https://img.shields.io/github/commit-activity/m/caplaz/hass-sfpuc?style=for-the-badge
-[commits]: https://github.com/caplaz/hass-sfpuc/commits/main
-[license-shield]: https://img.shields.io/github/license/caplaz/hass-sfpuc.svg?style=for-the-badge
+[releases-shield]: https://img.shields.io/github/release/caplaz/home-assistant-sfpuc.svg?style=for-the-badge
+[releases]: https://github.com/caplaz/home-assistant-sfpuc/releases
+[ci-shield]: https://img.shields.io/github/actions/workflow/status/caplaz/home-assistant-sfpuc/ci.yml?style=for-the-badge
+[ci]: https://github.com/caplaz/home-assistant-sfpuc/actions/workflows/ci.yml
+[commits-shield]: https://img.shields.io/github/commit-activity/m/caplaz/home-assistant-sfpuc?style=for-the-badge
+[commits]: https://github.com/caplaz/home-assistant-sfpuc/commits/main
+[license-shield]: https://img.shields.io/github/license/caplaz/home-assistant-sfpuc.svg?style=for-the-badge
 [logo]: https://www.sfpuc.gov/themes/custom/sfwater/img/scm_logo.svg

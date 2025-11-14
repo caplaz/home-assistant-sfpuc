@@ -72,6 +72,12 @@ SFPUC Portal → Integration → Home Assistant → Energy Dashboard
    - Provides real-time data to dashboards and automations
    - Maintains data availability and handles connection issues
 
+6. **Credential Management** 🔐
+   - Automatic detection of credential expiration
+   - Home Assistant repair notifications when credentials fail
+   - Easy fix flow for updating credentials
+   - Automatic integration reload on successful update
+
 ### Energy Dashboard Integration
 
 This integration enables comprehensive water usage tracking in Home Assistant's Energy dashboard:
@@ -82,6 +88,16 @@ This integration enables comprehensive water usage tracking in Home Assistant's 
 - **Statistics**: Proper statistics metadata for dashboard calculations
 - **Cost Tracking**: Foundation for future cost calculation features
 - **Comparative Analysis**: Track usage patterns across different time scales
+
+### Credential Management
+
+The integration monitors your SFPUC credentials and automatically alerts you when they need to be updated:
+
+- **Automatic Detection**: Detects login failures and credential issues
+- **Repair Notifications**: Shows notifications in Home Assistant UI
+- **Easy Fix Flow**: Two-step repair process with credential update form
+- **Automatic Testing**: Tests new credentials before saving
+- **Auto-reload**: Integration automatically reloads after credential update
 
 ### Update Cycle
 

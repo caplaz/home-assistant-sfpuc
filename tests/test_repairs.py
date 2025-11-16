@@ -23,7 +23,7 @@ class TestRepairs:
 
         result = await flow.async_step_init()
         assert result["type"] == "form"
-        assert result["step_id"] == "confirm"
+        assert result["step_id"] == "repair_confirm"
 
     async def test_credentials_repair_confirm_step(self, hass, config_entry):
         """Test the repair flow confirm step without input."""
@@ -33,7 +33,7 @@ class TestRepairs:
 
         result = await flow.async_step_confirm()
         assert result["type"] == "form"
-        assert result["step_id"] == "confirm"
+        assert result["step_id"] == "repair_confirm"
         assert "data_schema" in result
 
     async def test_credentials_repair_updates_entry(self, hass, config_entry):

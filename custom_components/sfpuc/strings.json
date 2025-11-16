@@ -40,12 +40,6 @@
       "description": "The credentials for account \"{account}\" are no longer valid. This could be due to:\n\n• Password has been changed\n• SFPUC account locked\n• Account permissions changed\n\nClick below to update your credentials."
     }
   },
-  "repair": {
-    "confirm": {
-      "title": "Update SFPUC Credentials",
-      "description": "Please enter your updated SFPUC credentials for account \"{account}\". Your credentials are stored locally in Home Assistant and never shared."
-    }
-  },
   "repair_flows": {
     "invalid_credentials": {
       "confirm": {

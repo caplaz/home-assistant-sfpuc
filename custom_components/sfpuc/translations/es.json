@@ -39,21 +39,5 @@
       "title": "Credenciales SFPUC Inválidas",
       "description": "Las credenciales para la cuenta \"{account}\" ya no son válidas. Esto podría deberse a:\n\n• La contraseña ha sido cambiada\n• La cuenta SFPUC está bloqueada\n• Los permisos de la cuenta han cambiado\n\nHaz clic a continuación para actualizar tus credenciales."
     }
-  },
-  "repair_flows": {
-    "invalid_credentials": {
-      "confirm": {
-        "title": "Actualizar Credenciales SFPUC",
-        "description": "Por favor ingresa tus credenciales SFPUC actualizadas para la cuenta \"{account}\". Tus credenciales se almacenan localmente en Home Assistant y nunca se comparten.",
-        "data": {
-          "username": "Nombre de Usuario SFPUC",
-          "password": "Contraseña SFPUC"
-        },
-        "data_description": {
-          "username": "Tu nombre de usuario de cuenta SFPUC o número de cuenta",
-          "password": "Tu contraseña de cuenta SFPUC"
-        }
-      }
-    }
   }
 }

@@ -85,4 +85,5 @@ class SFWaterCredentialsRepair(RepairsFlow):
             description_placeholders={
                 "account": self.context.get("account", "unknown"),  # type: ignore[dict-item]
             },
+            last_step=True,
         )

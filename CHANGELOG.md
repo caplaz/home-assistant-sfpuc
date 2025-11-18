@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.2 (2025-11-18)
+
+### Bug Fixes
+
+- Fix repair dialog "Handler does not support user" error
+- Correct repair flow step naming from `repair_confirm` to `confirm_repair`
+- Update repair flow method from `async_step_confirm` to `async_step_confirm_repair`
+
+### Improvements
+
+- Add backward compatibility for repair flow translations
+- Update all repair flow tests to match new step naming convention
+- Remove unnecessary `last_step` parameter from repair form
+
 ## 1.0.1 (2025-11-16)
 
 ### Enhancements

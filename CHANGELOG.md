@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.4 (2025-11-24)
+
+### Bug Fixes
+
+- Add 30-second timeout to all HTTP requests to prevent hanging connections
+- Implement retry logic with exponential backoff for network failures
+- Improve error handling for connection timeouts and network errors
+
 ## 1.0.3 (2025-11-19)
 
 ### Bug Fixes

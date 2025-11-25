@@ -130,7 +130,10 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     translation_placeholders={
                         "account": self.config_entry.data.get("username", "unknown"),
                     },
-                    data={"entry_id": self.config_entry.entry_id},
+                    data={
+                        "entry_id": self.config_entry.entry_id,
+                        "account": self.config_entry.data.get("username", "unknown"),
+                    },
                 )
                 raise UpdateFailed(
                     "Failed to login to SF PUC - credentials may be invalid"

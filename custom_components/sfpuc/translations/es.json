@@ -12,18 +12,6 @@
           "username": "Tu nombre de usuario de cuenta SFPUC o número de cuenta utilizado para iniciar sesión en el portal de agua.",
           "password": "Tu contraseña de cuenta SFPUC para acceder a los datos de uso."
         }
-      },
-      "repair_confirm": {
-        "title": "Actualizar Credenciales SFPUC",
-        "description": "Ingresa tus credenciales SFPUC actualizadas para la cuenta \"{account}\". Tus credenciales se almacenan localmente en Home Assistant y nunca se comparten.",
-        "data": {
-          "username": "Nombre de Usuario SFPUC",
-          "password": "Contraseña SFPUC"
-        },
-        "data_description": {
-          "username": "Tu nombre de usuario de cuenta SFPUC o número de cuenta",
-          "password": "Tu contraseña de cuenta SFPUC"
-        }
       }
     },
     "error": {
@@ -49,7 +37,21 @@
   "issues": {
     "invalid_credentials": {
       "title": "Credenciales SFPUC Inválidas",
-      "description": "Las credenciales para la cuenta \"{account}\" ya no son válidas. Esto podría deberse a:\n\n• La contraseña ha sido cambiada\n• La cuenta SFPUC está bloqueada\n• Los permisos de la cuenta han cambiado\n\nHaz clic a continuación para actualizar tus credenciales."
+      "description": "Las credenciales para la cuenta \"{account}\" ya no son válidas. Esto podría deberse a:\n\n• La contraseña ha sido cambiada\n• La cuenta SFPUC está bloqueada\n• Los permisos de la cuenta han cambiado\n\nHaz clic a continuación para actualizar tus credenciales.",
+      "fix_flow": {
+        "step": {
+          "confirm_repair": {
+            "title": "Actualizar Contraseña SFPUC",
+            "description": "Ingresa la contraseña actualizada para la cuenta SFPUC \"{account}\".",
+            "data": {
+              "password": "Contraseña"
+            },
+            "data_description": {
+              "password": "Tu contraseña de cuenta SFPUC"
+            }
+          }
+        }
+      }
     }
   }
 }

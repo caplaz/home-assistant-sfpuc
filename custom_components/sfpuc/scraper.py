@@ -487,6 +487,9 @@ class SFPUCScraper:
                         return None
                     continue
 
+            # If we exhausted all retries without returning, return None
+            return None
+
         except Exception as e:
             _LOGGER.error(
                 "Exception during %s data retrieval for user %s: %s",

@@ -68,9 +68,9 @@ class SFWaterCredentialsRepair(RepairsFlow):
             return self.async_abort(reason="credential_updated")
 
         # Get account from self.data (automatically populated by RepairsFlowManager)
-        account = "unknown"
+        account: str = "unknown"
         if self.data:
-            account = self.data.get("account", "unknown")
+            account = str(self.data.get("account", "unknown"))
         _LOGGER.debug("Showing repair form with account from self.data: %s", account)
 
         return self.async_show_form(

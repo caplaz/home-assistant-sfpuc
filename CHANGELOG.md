@@ -8,6 +8,13 @@
 - Implement retry logic with exponential backoff for network failures
 - Improve error handling for connection timeouts and network errors
 
+### Improvements
+
+- Refactor repairs flow to use RepairsFlowManager's automatic data injection
+- Simplify credential repair to password-only update (username stays unchanged)
+- Move repair flow translations to proper `issues.invalid_credentials.fix_flow` location
+- Clean up duplicate/unused repair translation steps
+
 ### Documentation
 
 - Update README.md for official HACS integration status

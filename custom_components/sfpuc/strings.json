@@ -37,7 +37,6 @@
   "issues": {
     "invalid_credentials": {
       "title": "Invalid SFPUC Credentials",
-      "description": "The credentials for account \"{account}\" are no longer valid. This could be due to:\n\n• Password has been changed\n• SFPUC account locked\n• Account permissions changed\n\nClick below to update your credentials.",
       "fix_flow": {
         "step": {
           "confirm_repair": {

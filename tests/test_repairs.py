@@ -19,7 +19,8 @@ class TestRepairs:
         """Test the repair flow init step."""
         flow = SFWaterCredentialsRepair()
         flow.hass = hass
-        flow.context = {"entry_id": config_entry.entry_id, "account": "testuser"}  # type: ignore[assignment,typeddict-unknown-key]
+        # RepairsFlowManager sets flow.data after async_create_fix_flow returns
+        flow.data = {"entry_id": config_entry.entry_id, "account": "testuser"}
 
         result = await flow.async_step_init()
         assert result["type"] == "form"
@@ -29,7 +30,8 @@ class TestRepairs:
         """Test the repair flow confirm step without input."""
         flow = SFWaterCredentialsRepair()
         flow.hass = hass
-        flow.context = {"entry_id": config_entry.entry_id, "account": "testuser"}  # type: ignore[assignment,typeddict-unknown-key]
+        # RepairsFlowManager sets flow.data after async_create_fix_flow returns
+        flow.data = {"entry_id": config_entry.entry_id, "account": "testuser"}
 
         result = await flow.async_step_confirm_repair()
         assert result["type"] == "form"
@@ -40,7 +42,8 @@ class TestRepairs:
         """Test the repair flow updating config entry."""
         flow = SFWaterCredentialsRepair()
         flow.hass = hass
-        flow.context = {"entry_id": config_entry.entry_id, "account": "testuser"}  # type: ignore[assignment,typeddict-unknown-key]
+        # RepairsFlowManager sets flow.data after async_create_fix_flow returns
+        flow.data = {"entry_id": config_entry.entry_id, "account": "testuser"}
 
         user_input = {"username": "newuser", "password": "newpass"}
 
@@ -62,9 +65,9 @@ class TestRepairs:
         data = {"entry_id": "test_entry", "account": "testuser"}
         flow = await async_create_fix_flow(hass, "invalid_credentials", data)
 
+        # async_create_fix_flow returns a bare flow object
+        # RepairsFlowManager sets flow.data after this function returns
         assert isinstance(flow, SFWaterCredentialsRepair)
-        assert flow.context["entry_id"] == "test_entry"
-        assert flow.context["account"] == "testuser"
 
     async def test_async_create_fix_flow_unknown_issue(self, hass):
         """Test creating a fix flow for unknown issue."""

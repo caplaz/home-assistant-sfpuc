@@ -127,17 +127,11 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 
 1. **Open HACS**: Go to HACS in your Home Assistant sidebar
 2. **Navigate to Integrations**: Click on "Integrations"
-3. **Add Custom Repository**:
-   - Click the three dots menu (⋮) in the top right
-   - Select "Custom repositories"
-   - Add repository: `https://github.com/caplaz/home-assistant-sfpuc`
-   - Category: `Integration`
-   - Click "Add"
-4. **Search and Install**:
+3. **Search and Install**:
    - Search for "San Francisco Water Power Sewer" in HACS
    - Click on it and select "Download"
    - Choose the latest version
-5. **Restart Home Assistant**: Required for the integration to load
+4. **Restart Home Assistant**: Required for the integration to load
 
 ### Method 2: Manual Installation
 
@@ -355,7 +349,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <!-- Badges -->
 
 [hacs]: https://github.com/hacs/integration
-[hacsbadge]: https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge
+[hacsbadge]: https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/caplaz/home-assistant-sfpuc.svg?style=for-the-badge
 [releases]: https://github.com/caplaz/home-assistant-sfpuc/releases
 [ci-shield]: https://img.shields.io/github/actions/workflow/status/caplaz/home-assistant-sfpuc/ci.yml?style=for-the-badge

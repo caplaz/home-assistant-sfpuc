@@ -8,6 +8,12 @@
 - Implement retry logic with exponential backoff for network failures
 - Improve error handling for connection timeouts and network errors
 
+### Documentation
+
+- Update README.md for official HACS integration status
+- Simplify HACS installation instructions (no longer requires custom repository)
+- Update HACS badge to reflect default integration status
+
 ## 1.0.3 (2025-11-19)
 
 ### Bug Fixes

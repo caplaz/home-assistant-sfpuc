@@ -39,8 +39,8 @@
       }
     },
     "error": {
-      "invalid_auth": "❌ Invalid username or password. Please check your SFPUC credentials and try again.",
-      "unknown": "❌ An unexpected error occurred during setup. Please check your internet connection and try again."
+      "invalid_auth": "Invalid username or password. Please check your SFPUC credentials and try again.",
+      "unknown": "An unexpected error occurred during setup. Please check your internet connection and try again."
     }
   },
   "options": {

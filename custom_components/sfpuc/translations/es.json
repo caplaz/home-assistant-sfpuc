@@ -27,8 +27,8 @@
       }
     },
     "error": {
-      "invalid_auth": "❌ Nombre de usuario o contraseña inválidos. Por favor verifica tus credenciales SFPUC e intenta nuevamente.",
-      "unknown": "❌ Ocurrió un error inesperado durante la configuración. Por favor verifica tu conexión a internet e intenta nuevamente."
+      "invalid_auth": "Nombre de usuario o contraseña inválidos. Por favor verifica tus credenciales SFPUC e intenta nuevamente.",
+      "unknown": "Ocurrió un error inesperado durante la configuración. Por favor verifica tu conexión a internet e intenta nuevamente."
     }
   },
   "options": {

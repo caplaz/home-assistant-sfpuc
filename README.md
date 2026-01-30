@@ -41,13 +41,11 @@ SFPUC Portal → Integration → Home Assistant → Energy Dashboard
 ### Step-by-Step Process
 
 1. **Authentication** 🔐
-
    - Integration logs into your SFPUC account using provided credentials
    - Maintains secure session for data access
    - Handles authentication errors gracefully
 
 2. **Historical Data Fetching** 📊
-
    - **Initial Setup**: Downloads 2 years of monthly data, 90 days of daily data, 30 days of hourly data
    - **Multiple Resolutions**: Fetches data at hourly, daily, and monthly intervals
    - **Backfilling**: Automatically fills missing data with 30-day lookback window
@@ -55,26 +53,22 @@ SFPUC Portal → Integration → Home Assistant → Energy Dashboard
    - **Smart Optimization**: Skips historical fetch on subsequent restarts if data exists
 
 3. **Data Processing** ⚙️
-
    - Converts raw SFPUC Excel data into structured Home Assistant sensor format
    - Applies proper device classes and state classes for each resolution
    - Calculates cumulative usage for accurate tracking across all time periods
 
 4. **Statistics Insertion** 📈
-
    - Inserts usage data into Home Assistant's recorder database at multiple resolutions
    - Creates consolidated statistics streams for comprehensive historical analysis
    - Enables Energy dashboard integration with proper cumulative sum calculations
    - Supports long-term usage trends and comparative analysis
 
 5. **Sensor Updates** 🔄
-
    - Updates sensors with latest data from each resolution
    - Provides real-time data to dashboards and automations
    - Maintains data availability and handles connection issues
 
 6. **Credential Management** 🔐
-
    - Automatic detection of credential expiration
    - Home Assistant repair notifications when credentials fail
    - Easy fix flow for updating credentials
@@ -145,14 +139,14 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 1. **Download the Integration**:
 
    ```bash
-   wget https://github.com/caplaz/home-assistant-sfpuc/archive/refs/tags/v1.0.4.zip
-   unzip v1.0.4.zip
+   wget https://github.com/caplaz/home-assistant-sfpuc/archive/refs/tags/v1.0.5.zip
+   unzip v1.0.5.zip
    ```
 
 2. **Copy Files**:
 
    ```bash
-   cp -r home-assistant-sfpuc-1.0.4/custom_components/sfpuc /config/custom_components/
+   cp -r home-assistant-sfpuc-1.0.5/custom_components/sfpuc /config/custom_components/
    ```
 
 3. **Restart Home Assistant**:
@@ -182,7 +176,6 @@ See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
 The integration creates a single primary sensor that displays current billing period water usage:
 
 - **San Francisco Water Power Sewer** (`sensor.sfpuc_water_account_{account}_current_bill_water_usage_to_date`)
-
   - **State**: Current billing period cumulative water usage in gallons (from last bill date to today)
   - **Device Class**: `water`
   - **State Class**: None (statistics-only approach)

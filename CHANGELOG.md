@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.5 (2026-01-30)
+
+### Improvements
+
+- Enhance config flow with detailed data field descriptions for better user guidance
+- Improve user onboarding experience with clear field explanations in setup flow
+- Add comprehensive data descriptions for username and password fields
+- Maintain bilingual support (English/Spanish) for all new field descriptions
+
+### Bug Fixes
+
+- Resolve hassfest translation validation errors by removing invalid description_placeholders
+- Fix MyPy type errors by removing invalid unit_class parameters from statistics handler
+- Ensure all translation files pass Home Assistant validation requirements
+
 ## 1.0.4 (2025-11-24)
 
 ### Bug Fixes

@@ -15,5 +15,5 @@
     "beautifulsoup4>=4.9.3",
     "voluptuous>=0.13.1"
   ],
-  "version": "1.0.4"
+  "version": "1.0.5"
 }

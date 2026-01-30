@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Configuración de Agua de San Francisco",
-        "description": "Conéctate a tu cuenta SFPUC para monitorear el uso de agua.\n\nRequerido: Nombre de usuario y contraseña de SFPUC desde https://myaccount-water.sfpuc.org\n\n Sensor de Agua\n• Uso diario en galones (acumulativo)\n• Se actualiza cada 12 horas\n\nConsejos de Configuración:\n• El nombre de usuario es típicamente tu número de cuenta o email\n• La contraseña es tu contraseña del portal SFPUC\n• Los datos se actualizan automáticamente cada 12 horas\n• Todos los datos se almacenan localmente en la base de datos de Home Assistant",
+        "description": "Conéctate a tu cuenta SFPUC para monitorear el uso de agua.\n\nRequerido: Nombre de usuario y contraseña de SFPUC desde el portal de Mi Cuenta SFPUC\n\n Sensor de Agua\n• Uso diario en galones (acumulativo)\n• Se actualiza cada 12 horas\n\nConsejos de Configuración:\n• El nombre de usuario es típicamente tu número de cuenta o email\n• La contraseña es tu contraseña del portal SFPUC\n• Los datos se actualizan automáticamente cada 12 horas\n• Todos los datos se almacenan localmente en la base de datos de Home Assistant",
         "data_description": {
           "username": "Tu nombre de usuario de cuenta SFPUC o número de cuenta utilizado para iniciar sesión en el portal de agua.",
           "password": "Tu contraseña de cuenta SFPUC para acceder a los datos de uso."

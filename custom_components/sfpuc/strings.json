@@ -2,54 +2,28 @@
   "config": {
     "step": {
       "user": {
-        "title": "San Francisco Water Setup",
-        "description": "Connect to your SFPUC account to monitor water usage.\n\nRequired: SFPUC username and password from the SFPUC MyAccount portal\n\n Water Sensor\n• Daily usage in gallons (cumulative)\n• Updates every 12 hours\n\nConfiguration Tips:\n• Username is typically your account number or email\n• Password is your SFPUC portal password\n• Data updates automatically every 12 hours\n• All data is stored locally in Home Assistant database",
+        "title": "SFPUC Configuration",
+        "description": "Enter your SFPUC credentials. Optionally add Flo by Moen for real-time usage and cost calculation.",
         "data": {
-          "username": "Username",
-          "password": "Password"
-        },
-        "data_description": {
-          "username": "Your SFPUC account username or account number used to login to the water portal.",
-          "password": "Your SFPUC account password for accessing usage data."
+          "username": "SFPUC Username",
+          "password": "SFPUC Password",
+          "flo_username": "Flo Username (optional)",
+          "flo_password": "Flo Password (optional)"
         }
       }
     },
     "error": {
-      "invalid_auth": "Invalid username or password. Please check your SFPUC credentials and try again.",
-      "unknown": "An unexpected error occurred during setup. Please check your internet connection and try again."
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "San Francisco Water Power Sewer Configuration",
-        "description": "San Francisco Water Power Sewer integration uses automatic settings optimized for daily water usage data. Updates occur every 12 hours to stay current with SFPUC data while respecting server resources.\n\n**Current Settings:**\n• Update interval: Fixed at 12 hours\n• Data source: SFPUC daily usage\n• Storage: Local Home Assistant database\n\nNo configuration changes are needed."
-      }
+      "auth": "Authentication failed. Check your credentials.",
+      "flo_auth": "Flo authentication failed. Check your Flo credentials."
     }
   },
   "entity": {
     "sensor": {
-      "current_bill_water_usage_to_date": {
-        "name": "Current bill water usage to date"
-      }
-    }
-  },
-  "issues": {
-    "invalid_credentials": {
-      "title": "Invalid SFPUC Credentials",
-      "fix_flow": {
-        "step": {
-          "confirm_repair": {
-            "title": "Update SFPUC Password",
-            "description": "Please enter the updated password for SFPUC account \"{account}\".",
-            "data": {
-              "password": "Password"
-            },
-            "data_description": {
-              "password": "Your SFPUC account password"
-            }
-          }
-        }
+      "usage": {
+        "name": "Water Usage"
+      },
+      "cost": {
+        "name": "Current Bill Water Cost"
       }
     }
   }

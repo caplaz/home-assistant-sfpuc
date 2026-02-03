@@ -1,24 +1,21 @@
-"""Constants for the San Francisco Water Power Sewer integration."""
-
+"""Constants for the SFPUC integration."""
 DOMAIN = "sfpuc"
 
-# Configuration options
 CONF_USERNAME = "username"
-CONF_PASSWORD = "password"  # nosec B105
+CONF_PASSWORD = "password"
+CONF_FLO_USERNAME = "flo_username"
+CONF_FLO_PASSWORD = "flo_password"
 
-# Default configuration values
-DEFAULT_UPDATE_INTERVAL = 720  # minutes (12 hours - fixed for daily data)
+# SFPUC cost tiers (2023 rates)
+TIER_1_LIMIT = 10  # ccf
+TIER_2_LIMIT = 20  # ccf
+TIER_1_RATE = 2.54  # $/ccf
+TIER_2_RATE = 3.50  # $/ccf
+TIER_3_RATE = 6.27  # $/ccf
 
-# Sensor data keys
-KEY_DAILY_USAGE = "daily_usage"
-KEY_LAST_UPDATED = "last_updated"
+# Sensors
+SENSOR_USAGE = "usage"
+SENSOR_COST = "cost"
 
-# Sensor types configuration
-SENSOR_TYPES = {
-    "daily_usage": {
-        "name": "Daily Water Usage",
-        "unit": "gal",
-        "icon": "mdi:water",
-        "device_class": "water",
-    },
-}
+# Update interval
+UPDATE_INTERVAL = 12  # hours

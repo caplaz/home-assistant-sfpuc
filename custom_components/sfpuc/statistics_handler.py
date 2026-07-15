@@ -16,6 +16,7 @@ from homeassistant.components.recorder.statistics import (
 from homeassistant.components.recorder.util import DATA_INSTANCE
 from homeassistant.const import UnitOfVolume
 from homeassistant.util import dt as dt_util
+from homeassistant.util.unit_conversion import VolumeConverter
 
 from .const import CONF_USERNAME, DOMAIN
 
@@ -146,6 +147,7 @@ async def async_insert_resolution_statistics(
             name=name,
             source=DOMAIN,
             statistic_id=stat_id,
+            unit_class=VolumeConverter.UNIT_CLASS,
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
 
@@ -331,6 +333,7 @@ async def async_insert_legacy_statistics(coordinator, daily_usage: float) -> Non
             name="San Francisco Water Power Sewer",
             source=DOMAIN,
             statistic_id=f"{DOMAIN}:{safe_account}_water_consumption",
+            unit_class=VolumeConverter.UNIT_CLASS,
             unit_of_measurement=UnitOfVolume.GALLONS.value,
         )
 

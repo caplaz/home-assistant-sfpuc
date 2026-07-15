@@ -127,6 +127,41 @@ class TestStatisticsHandler:
         # Since the function was mocked, it should not have failed with the Mock await error
 
     @pytest.mark.asyncio
+    async def test_statistics_metadata_includes_unit_class(
+        self, hass, config_entry
+    ):
+        """Metadata must include unit_class for HA 2026.11+."""
+        from homeassistant.util.unit_conversion import VolumeConverter
+
+        coordinator = SFWaterCoordinator(hass, config_entry)
+        daily_data = [
+            {
+                "timestamp": datetime(2023, 10, 1),
+                "usage": 150.0,
+                "resolution": "daily",
+            },
+        ]
+
+        with (
+            patch(
+                "custom_components.sfpuc.statistics_handler.get_instance"
+            ) as mock_get_instance,
+            patch(
+                "custom_components.sfpuc.statistics_handler.async_add_external_statistics"
+            ) as mock_add_stats,
+        ):
+            mock_instance = Mock()
+            mock_instance.async_add_executor_job = AsyncMock(return_value={})
+            mock_get_instance.return_value = mock_instance
+
+            await async_insert_statistics(coordinator, daily_data)
+
+        mock_add_stats.assert_called_once()
+        metadata = mock_add_stats.call_args.args[1]
+        assert metadata["unit_class"] == VolumeConverter.UNIT_CLASS
+        assert metadata["unit_of_measurement"] == "gal"
+
+    @pytest.mark.asyncio
     async def test_insert_statistics_empty_data(self, hass, config_entry):
         """Test inserting statistics with empty data."""
         coordinator = SFWaterCoordinator(hass, config_entry)

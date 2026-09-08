@@ -12,7 +12,14 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_PASSWORD, CONF_USERNAME, DEFAULT_UPDATE_INTERVAL, DOMAIN
+from .const import (
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    DEFAULT_UPDATE_INTERVAL,
+    DOMAIN,
+    EXPECTED_DATA_LAG_DAYS,
+    MAX_EXPECTED_DATA_LAG_DAYS,
+)
 from .data_fetcher import (
     async_backfill_missing_data,
     async_background_historical_fetch,
@@ -22,6 +29,34 @@ from .scraper import SFPUCScraper
 from .utils import async_detect_billing_day, calculate_billing_period
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _newest_statistic_start(rows: list[dict[str, Any]]) -> datetime | None:
+    """Return the newest ``start`` timestamp from statistics rows.
+
+    Rows carry ``start`` as either a UNIX timestamp or a datetime depending
+    on the Home Assistant version, so normalise both to an aware datetime.
+
+    Args:
+        rows: Statistics rows as returned by ``statistics_during_period``.
+
+    Returns:
+        The newest start time as an aware datetime, or None if unavailable.
+    """
+    newest: datetime | None = None
+    for row in rows:
+        start = row.get("start")
+        if start is None:
+            continue
+        if isinstance(start, (int, float)):
+            start = dt_util.utc_from_timestamp(start)
+        elif not isinstance(start, datetime):
+            continue
+        elif start.tzinfo is None:
+            start = dt_util.as_utc(start)
+        if newest is None or start > newest:
+            newest = start
+    return newest
 
 
 class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -229,6 +264,7 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     current_bill_usage = sum(
                         float(stat.get("state", 0) or 0) for stat in stats[stat_id]
                     )
+                    data_through = _newest_statistic_start(stats[stat_id])
                     self.logger.debug(
                         "Calculated current billing period usage from statistics: %.2f gallons from %d hourly records",
                         current_bill_usage,
@@ -239,20 +275,46 @@ class SFWaterCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         "No statistics found for current billing period"
                     )
                     current_bill_usage = 0
+                    data_through = None
 
             except Exception as err:
                 self.logger.error("Failed to calculate usage from statistics: %s", err)
                 current_bill_usage = 0
+                data_through = None
+
+            # The sensor value is derived from statistics already stored in the
+            # recorder, so it stays plausible even when collection has stopped.
+            # Surface how current the underlying data actually is, otherwise a
+            # broken fetch is indistinguishable from a working one.
+            data_age_days: float | None = None
+            if data_through is not None:
+                data_age_days = round(
+                    (dt_util.utcnow() - data_through).total_seconds() / 86400, 2
+                )
+                if data_age_days > MAX_EXPECTED_DATA_LAG_DAYS:
+                    self.logger.warning(
+                        "SFPUC water data is %.1f days old (newest reading %s). "
+                        "SFPUC normally lags ~%d days; a larger gap usually means "
+                        "collection is failing - check the log for download errors "
+                        "and verify the stored credentials.",
+                        data_age_days,
+                        data_through.isoformat(),
+                        EXPECTED_DATA_LAG_DAYS,
+                    )
 
             # Return simplified data for the single sensor
             data = {
                 "current_bill_usage": current_bill_usage,
                 "last_updated": datetime.now(),
+                "data_through": data_through,
+                "data_age_days": data_age_days,
             }
 
             self.logger.info(
-                "Data update completed successfully - Current billing period usage: %.2f gallons",
+                "Data update completed successfully - Current billing period "
+                "usage: %.2f gallons (data through %s)",
                 current_bill_usage,
+                data_through.isoformat() if data_through else "unknown",
             )
             return data
 

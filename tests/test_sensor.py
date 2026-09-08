@@ -106,3 +106,38 @@ class TestSFWaterSensor:
         """Test sensor description translation keys."""
         translation_keys = [desc.translation_key for desc in WATER_SENSORS]
         assert "current_bill_water_usage_to_date" in translation_keys
+
+    def test_extra_state_attributes_expose_data_freshness(self):
+        """The sensor reports how current the underlying statistics are.
+
+        The state is derived from statistics already in the recorder, so it
+        stays plausible when collection breaks. These attributes are what
+        make that visible.
+        """
+        from datetime import datetime, timezone
+
+        data_through = datetime(2026, 9, 6, 23, 0, tzinfo=timezone.utc)
+        self.coordinator.data = {
+            "current_bill_usage": 150.5,
+            "last_updated": "2026-09-08T12:00:00Z",
+            "data_through": data_through,
+            "data_age_days": 1.5,
+        }
+
+        sensor = SFWaterSensor(self.coordinator, WATER_SENSORS[0])
+
+        assert sensor.extra_state_attributes == {
+            "data_through": "2026-09-06T23:00:00+00:00",
+            "data_age_days": 1.5,
+        }
+
+    def test_extra_state_attributes_without_freshness_data(self):
+        """Missing freshness data yields None rather than raising."""
+        self.coordinator.data = {"current_bill_usage": 0}
+
+        sensor = SFWaterSensor(self.coordinator, WATER_SENSORS[0])
+
+        assert sensor.extra_state_attributes == {
+            "data_through": None,
+            "data_age_days": None,
+        }

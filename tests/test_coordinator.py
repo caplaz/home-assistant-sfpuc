@@ -1,6 +1,6 @@
 """Tests for San Francisco Water Power Sewer coordinator."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -233,3 +233,41 @@ class TestSFWaterCoordinator:
 
             # Coordinator should still be functional
             assert coordinator is not None
+
+
+class TestNewestStatisticStart:
+    """Test normalisation of statistics row timestamps."""
+
+    def test_handles_unix_timestamps(self):
+        """Rows carrying float ``start`` values are converted to datetimes."""
+        from datetime import timezone
+
+        from custom_components.sfpuc.coordinator import _newest_statistic_start
+
+        rows = [
+            {"start": 1757116800.0, "state": 1.0},
+            {"start": 1757203200.0, "state": 2.0},
+        ]
+
+        newest = _newest_statistic_start(rows)
+
+        assert newest == datetime.fromtimestamp(1757203200.0, tz=timezone.utc)
+
+    def test_handles_datetimes_and_picks_newest(self):
+        """Aware datetimes are compared directly."""
+        from datetime import timezone
+
+        from custom_components.sfpuc.coordinator import _newest_statistic_start
+
+        older = datetime(2026, 9, 2, 6, 0, tzinfo=timezone.utc)
+        newer = datetime(2026, 9, 7, 6, 0, tzinfo=timezone.utc)
+
+        assert _newest_statistic_start([{"start": newer}, {"start": older}]) == newer
+
+    def test_ignores_unusable_rows(self):
+        """Missing or malformed ``start`` values are skipped, not raised on."""
+        from custom_components.sfpuc.coordinator import _newest_statistic_start
+
+        assert _newest_statistic_start([]) is None
+        assert _newest_statistic_start([{"state": 1.0}]) is None
+        assert _newest_statistic_start([{"start": "not-a-time"}]) is None

@@ -83,6 +83,70 @@ class TestSFPUCScraper:
         result = self.scraper.login()
         assert result is False
 
+    @staticmethod
+    def _login_page_mock():
+        """Return a mock sign-in page carrying the required form tokens."""
+        login_page = Mock()
+        login_page.status_code = 200
+        login_page.content = b"""
+        <html>
+            <form>
+                <input name="__VIEWSTATE" value="test_viewstate" />
+                <input name="__EVENTVALIDATION" value="test_validation" />
+            </form>
+        </html>
+        """
+        return login_page
+
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_login_failure_stays_on_login_aspx(self, mock_post, mock_get):
+        """A rejected sign-in that lands on LOGIN.aspx must report failure.
+
+        Regression test: the portal serves its sign-in page with the word
+        "Account" in the body, so body-keyword scoring reported a false
+        success while the session stayed unauthenticated. Every later
+        request then hit the portal's error page.
+        """
+        mock_get.return_value = self._login_page_mock()
+
+        login_response = Mock()
+        login_response.status_code = 200
+        login_response.url = "https://myaccount-water.sfpuc.org/LOGIN.aspx"
+        # The real sign-in page contains "Account" but no session markers.
+        login_response.text = "<html>Sign in to My Account</html>"
+        mock_post.return_value = login_response
+
+        assert self.scraper.login() is False
+
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_login_failure_unexpected_landing_page(self, mock_post, mock_get):
+        """An unrecognised landing page with no session marker is a failure."""
+        mock_get.return_value = self._login_page_mock()
+
+        login_response = Mock()
+        login_response.status_code = 200
+        login_response.url = "https://myaccount-water.sfpuc.org/MAINTENANCE.aspx"
+        login_response.text = "<html>The portal is temporarily unavailable</html>"
+        mock_post.return_value = login_response
+
+        assert self.scraper.login() is False
+
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_login_success_via_session_marker(self, mock_post, mock_get):
+        """A different landing page still succeeds when a session marker is present."""
+        mock_get.return_value = self._login_page_mock()
+
+        login_response = Mock()
+        login_response.status_code = 200
+        login_response.url = "https://myaccount-water.sfpuc.org/ACCOUNT_SUMMARY.aspx"
+        login_response.text = "<html><a href='/logoff'>Logout</a></html>"
+        mock_post.return_value = login_response
+
+        assert self.scraper.login() is True
+
     @patch("requests.Session.get")
     @patch("requests.Session.post")
     def test_get_usage_data_hourly_success(self, mock_post, mock_get):

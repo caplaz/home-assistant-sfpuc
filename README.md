@@ -139,14 +139,14 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 1. **Download the Integration**:
 
    ```bash
-   wget https://github.com/caplaz/home-assistant-sfpuc/archive/refs/tags/v1.0.5.zip
-   unzip v1.0.5.zip
+   wget https://github.com/caplaz/home-assistant-sfpuc/archive/refs/tags/v1.1.0.zip
+   unzip v1.1.0.zip
    ```
 
 2. **Copy Files**:
 
    ```bash
-   cp -r home-assistant-sfpuc-1.0.5/custom_components/sfpuc /config/custom_components/
+   cp -r home-assistant-sfpuc-1.1.0/custom_components/sfpuc /config/custom_components/
    ```
 
 3. **Restart Home Assistant**:

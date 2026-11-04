@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.0 (2026-11-04)
+
+### New Features & Improvements
+
+- **Data Staleness Visibility**: Expose `data_through` and `data_age_days` attributes on the primary sensor, making collection health transparent in the UI and usable in automations (#9, PR #11)
+- **Coordinator Warning on Stale Data**: Log a warning when data age exceeds 4 days (normal 2-day SFPUC lag plus margin), identifying broken collection early (#9, PR #11)
+
+### Bug Fixes
+
+- **Authentication Validation**: Fix false-positive login success when credentials are rejected by checking authoritative landing URLs rather than page text matching "Account" (PR #8)
+- **Hourly Fetch Circuit Breaker**: Abort day-by-day historical backfill after 3 consecutive failures to prevent hammering the SFPUC portal with ~93 failed requests per cycle during session or network outages (#10, PR #12)
+- **Home Assistant 2026.11 Compatibility**: Specify `unit_class=VolumeConverter.UNIT_CLASS` when creating external statistics to resolve deprecation warnings and ensure compatibility with Home Assistant 2026.11+ (#4, PR #5)
+
 ## 1.0.5 (2026-01-30)
 
 ### Improvements

@@ -133,59 +133,62 @@ class SFPUCScraper:
                     response.url,
                 )
 
-                # Check if login successful
-                # Look for indicators of successful login vs failure
+                # Check if login successful.
+                #
+                # The landing URL is authoritative and page text is not: the
+                # portal serves the sign-in form from the site root, and that
+                # page already contains words like "Account", so scoring the
+                # body for success keywords reports a false success whenever
+                # the credentials are rejected. On failure the browser stays
+                # on the sign-in page (site root, or LOGIN.aspx); on success
+                # it is redirected to the account landing page.
                 if response.status_code == 200:
-                    # Check for common success indicators
-                    success_indicators = [
-                        "MY_ACCOUNT_RSF.aspx" in response.url,
-                        "Welcome" in response.text,
-                        "Dashboard" in response.text,
-                        "Account" in response.text,
-                        "Usage" in response.text,
-                        "Logout" in response.text,
-                    ]
+                    final_url = response.url or ""
+                    upper_url = final_url.upper()
 
-                    # Check for failure indicators
-                    failure_indicators = [
-                        "Invalid" in response.text
-                        and "password" in response.text.lower(),
-                        "Login failed" in response.text,
-                        "Authentication failed" in response.text,
-                        "Error" in response.text and "login" in response.text.lower(),
-                        "Please try again" in response.text,
-                        response.url.endswith("/"),  # Still on login page
-                    ]
-
-                    success_score = sum(success_indicators)
-                    failure_score = sum(failure_indicators)
-
-                    _LOGGER.debug(
-                        "Login analysis - Success indicators: %d, Failure indicators: %d",
-                        success_score,
-                        failure_score,
+                    still_on_login_page = (
+                        "LOGIN.ASPX" in upper_url
+                        or final_url.rstrip("/") == self.base_url
                     )
-                    _LOGGER.debug("Response URL: %s", response.url)
-                    _LOGGER.debug(
-                        "Response contains 'Welcome': %s", "Welcome" in response.text
-                    )
-                    _LOGGER.debug(
-                        "Response contains 'Invalid': %s", "Invalid" in response.text
+                    reached_account_page = "MY_ACCOUNT_RSF.ASPX" in upper_url
+                    # Fallback for a future landing page: an authenticated
+                    # session always offers a way to sign back out.
+                    has_session_marker = (
+                        "Logout" in response.text or "Sign Out" in response.text
                     )
 
-                    if success_score > 0 and failure_score == 0:
+                    _LOGGER.debug(
+                        "Login analysis - URL: %s (still_on_login=%s, "
+                        "account_page=%s, session_marker=%s)",
+                        final_url,
+                        still_on_login_page,
+                        reached_account_page,
+                        has_session_marker,
+                    )
+
+                    if still_on_login_page:
+                        _LOGGER.warning(
+                            "SFPUC login failed for user %s - still on the "
+                            "sign-in page (%s). Check the stored credentials.",
+                            self.username[:3] + "***",
+                            final_url,
+                        )
+                        return False
+
+                    if reached_account_page or has_session_marker:
                         _LOGGER.info(
                             "SFPUC login successful for user: %s",
                             self.username[:3] + "***",
                         )
                         return True
-                    else:
-                        _LOGGER.warning(
-                            "SFPUC login failed - success_score: %d, failure_score: %d",
-                            success_score,
-                            failure_score,
-                        )
-                        return False
+
+                    _LOGGER.warning(
+                        "SFPUC login failed for user %s - unexpected landing "
+                        "page (%s)",
+                        self.username[:3] + "***",
+                        final_url,
+                    )
+                    return False
                 else:
                     _LOGGER.warning(
                         "SFPUC login failed with status code: %s", response.status_code

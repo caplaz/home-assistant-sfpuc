@@ -7,7 +7,7 @@ from homeassistant.components.recorder import get_instance
 from homeassistant.components.recorder.statistics import statistics_during_period
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_USERNAME, DOMAIN
+from .const import CONF_USERNAME, DOMAIN, MAX_CONSECUTIVE_FETCH_FAILURES
 from .statistics_handler import async_insert_statistics
 
 
@@ -188,6 +188,7 @@ async def async_fetch_historical_data(coordinator) -> None:
         coordinator.logger.info("Fetching hourly data for last 32 days...")
         try:
             all_hourly_data = []
+            consecutive_failures = 0
             # Fetch from 32 days ago to 2 days ago (respecting SFPUC data lag)
             # range(32, 1, -1) gives offsets 32..2, covering Oct 12 to Nov 11
 
@@ -238,11 +239,26 @@ async def async_fetch_historical_data(coordinator) -> None:
 
                 if hourly_chunk:
                     all_hourly_data.extend(hourly_chunk)
+                    consecutive_failures = 0
                     coordinator.logger.debug(
                         "Fetched %d hourly data points for %s",
                         len(hourly_chunk),
                         fetch_date.date(),
                     )
+                else:
+                    # A dead session fails every remaining day in the window.
+                    # Stop rather than spend ~90 more requests proving it.
+                    consecutive_failures += 1
+                    if consecutive_failures >= MAX_CONSECUTIVE_FETCH_FAILURES:
+                        coordinator.logger.warning(
+                            "Aborting hourly fetch after %d consecutive failures "
+                            "(last attempted date %s). The portal session is "
+                            "likely broken; check the log for download errors "
+                            "and verify the stored credentials.",
+                            consecutive_failures,
+                            fetch_date.date(),
+                        )
+                        break
 
                 # Small delay to avoid overwhelming the server
                 await asyncio.sleep(0.5)
@@ -356,6 +372,7 @@ async def async_backfill_missing_data(coordinator) -> None:
             # Fetch hourly data from start_date to end_date_available, one day at a time
             hourly_data_all = []
             current_date = start_date
+            consecutive_failures = 0
 
             while current_date.date() <= end_date_available.date():
                 fetch_date = current_date
@@ -393,6 +410,21 @@ async def async_backfill_missing_data(coordinator) -> None:
 
                 if hourly_chunk:
                     hourly_data_all.extend(hourly_chunk)
+                    consecutive_failures = 0
+                else:
+                    # A dead session fails every remaining day in the window.
+                    # Stop rather than keep hammering the portal.
+                    consecutive_failures += 1
+                    if consecutive_failures >= MAX_CONSECUTIVE_FETCH_FAILURES:
+                        coordinator.logger.warning(
+                            "Aborting hourly backfill after %d consecutive "
+                            "failures (last attempted date %s). The portal "
+                            "session is likely broken; check the log for "
+                            "download errors and verify the stored credentials.",
+                            consecutive_failures,
+                            fetch_date.date(),
+                        )
+                        break
 
                 # Move to next day
                 current_date += timedelta(days=1)

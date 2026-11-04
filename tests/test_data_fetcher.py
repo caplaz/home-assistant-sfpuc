@@ -484,3 +484,135 @@ class TestDataFetcher:
 
         # The hourly data should start from 32 days back to overlap with daily
         assert earliest_hourly_date == expected_earliest
+
+
+class TestFetchCircuitBreaker:
+    """Test that a persistently failing session stops the day-by-day walk."""
+
+    @pytest.fixture(autouse=True)
+    def setup_method(self, hass):
+        """Set up test fixtures."""
+        self.hass = hass
+        from homeassistant.components.recorder.util import DATA_INSTANCE
+
+        if DATA_INSTANCE not in hass.data:
+            recorder_mock = Mock()
+            recorder_mock.async_add_executor_job = AsyncMock()
+            hass.data[DATA_INSTANCE] = recorder_mock
+
+    @pytest.fixture(autouse=True)
+    def mock_coordinator_timer(self):
+        """Prevent lingering timers and background tasks."""
+        with (
+            patch("asyncio.AbstractEventLoop.call_later", return_value=None),
+            patch("asyncio.create_task", return_value=None),
+            patch(
+                "custom_components.sfpuc.data_fetcher.async_background_historical_fetch",
+                return_value=None,
+            ),
+        ):
+            yield
+
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
+    @pytest.mark.asyncio
+    async def test_hourly_fetch_aborts_after_consecutive_failures(
+        self, mock_scraper_class, hass, config_entry, mock_asyncio_sleep
+    ):
+        """The 32-day hourly walk stops once the session is clearly dead.
+
+        Without a breaker a broken session issues ~93 requests per cycle
+        that cannot succeed, which is pointless load on the portal and a
+        plausible way to get the account rate limited.
+        """
+        from custom_components.sfpuc.const import MAX_CONSECUTIVE_FETCH_FAILURES
+
+        hourly_calls = []
+
+        def get_usage_data_side_effect(start, end, resolution="hourly"):
+            if resolution == "hourly":
+                hourly_calls.append(start)
+                return []  # Every day fails, as with a dead session
+            if resolution == "monthly":
+                return [
+                    {
+                        "timestamp": datetime(2026, 9, 1),
+                        "usage": 150.0,
+                        "resolution": "monthly",
+                    }
+                ]
+            return []
+
+        mock_scraper = Mock()
+        mock_scraper_class.return_value = mock_scraper
+        mock_scraper.get_usage_data = Mock(side_effect=get_usage_data_side_effect)
+
+        coordinator = SFWaterCoordinator(hass, config_entry)
+
+        with (
+            patch(
+                "custom_components.sfpuc.data_fetcher.async_check_has_historical_data",
+                return_value=False,
+            ),
+            patch(
+                "custom_components.sfpuc.data_fetcher.async_insert_statistics",
+                new_callable=AsyncMock,
+            ),
+        ):
+            await async_fetch_historical_data(coordinator)
+
+        # Stops at the breaker instead of walking all 31 days.
+        assert len(hourly_calls) == MAX_CONSECUTIVE_FETCH_FAILURES
+
+    @patch("custom_components.sfpuc.coordinator.SFPUCScraper")
+    @pytest.mark.asyncio
+    async def test_hourly_fetch_continues_past_isolated_gap(
+        self, mock_scraper_class, hass, config_entry, mock_asyncio_sleep
+    ):
+        """A day with genuinely no data must not abort the whole walk."""
+        from custom_components.sfpuc.const import MAX_CONSECUTIVE_FETCH_FAILURES
+
+        hourly_calls = []
+
+        def get_usage_data_side_effect(start, end, resolution="hourly"):
+            if resolution == "hourly":
+                hourly_calls.append(start)
+                # Fail one short of the breaker, then succeed, repeatedly.
+                if len(hourly_calls) % MAX_CONSECUTIVE_FETCH_FAILURES == 0:
+                    return [
+                        {
+                            "timestamp": start,
+                            "usage": 1.0,
+                            "resolution": "hourly",
+                        }
+                    ]
+                return []
+            if resolution == "monthly":
+                return [
+                    {
+                        "timestamp": datetime(2026, 9, 1),
+                        "usage": 150.0,
+                        "resolution": "monthly",
+                    }
+                ]
+            return []
+
+        mock_scraper = Mock()
+        mock_scraper_class.return_value = mock_scraper
+        mock_scraper.get_usage_data = Mock(side_effect=get_usage_data_side_effect)
+
+        coordinator = SFWaterCoordinator(hass, config_entry)
+
+        with (
+            patch(
+                "custom_components.sfpuc.data_fetcher.async_check_has_historical_data",
+                return_value=False,
+            ),
+            patch(
+                "custom_components.sfpuc.data_fetcher.async_insert_statistics",
+                new_callable=AsyncMock,
+            ),
+        ):
+            await async_fetch_historical_data(coordinator)
+
+        # A periodic success resets the counter, so the full window runs.
+        assert len(hourly_calls) == 31

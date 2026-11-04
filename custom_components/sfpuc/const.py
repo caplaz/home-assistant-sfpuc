@@ -16,6 +16,11 @@ EXPECTED_DATA_LAG_DAYS = 2
 # normal lag plus a margin means collection has stopped.
 MAX_EXPECTED_DATA_LAG_DAYS = 4
 
+# Give up on a day-by-day fetch once this many consecutive days fail. A
+# broken session fails every remaining day in the window, so continuing
+# only hammers the portal with requests that cannot succeed.
+MAX_CONSECUTIVE_FETCH_FAILURES = 3
+
 # Sensor data keys
 KEY_DAILY_USAGE = "daily_usage"
 KEY_LAST_UPDATED = "last_updated"

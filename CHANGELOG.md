@@ -13,6 +13,13 @@
 - **Hourly Fetch Circuit Breaker**: Abort day-by-day historical backfill after 3 consecutive failures to prevent hammering the SFPUC portal with ~93 failed requests per cycle during session or network outages (#10, PR #12)
 - **Home Assistant 2026.11 Compatibility**: Specify `unit_class=VolumeConverter.UNIT_CLASS` when creating external statistics to resolve deprecation warnings and ensure compatibility with Home Assistant 2026.11+ (#4, PR #5)
 
+### Contributors
+
+A special thank you to our community contributors for this release:
+- @pleasantone for identifying the login false-positive and staleness issues, and contributing PR #8, PR #11, and PR #12
+- @joyjit for contributing the Home Assistant 2026.11 `unit_class` compatibility fix in PR #5
+- @simX for testing, issue reports, and troubleshooting feedback (#4, #6, #7, #9)
+
 ## 1.0.5 (2026-01-30)
 
 ### Improvements

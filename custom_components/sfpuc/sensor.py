@@ -104,6 +104,25 @@ class SFWaterSensor(CoordinatorEntity[SFWaterCoordinator], SensorEntity):
         """
         return self.entity_description.value_fn(self.coordinator.data)
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return freshness details for the underlying usage data.
+
+        The state is derived from statistics already held by the recorder,
+        so it stays plausible even when collection has stopped. These
+        attributes make that visible to the user and usable in templates
+        and automations.
+
+        Returns:
+            Mapping with the newest reading timestamp and its age in days.
+        """
+        data = self.coordinator.data or {}
+        data_through = data.get("data_through")
+        return {
+            "data_through": data_through.isoformat() if data_through else None,
+            "data_age_days": data.get("data_age_days"),
+        }
+
 
 async def async_setup_entry(
     hass: HomeAssistant,

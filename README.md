@@ -114,7 +114,7 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 #### Prerequisites
 
 - [HACS](https://hacs.xyz/) must be installed in your Home Assistant instance
-- Home Assistant version 2023.1.0 or higher
+- Home Assistant version 2025.11.0 or higher
 - Valid SFPUC account credentials
 
 #### Installation Steps
@@ -131,7 +131,7 @@ HACS (Home Assistant Community Store) is the easiest way to install and manage c
 
 #### Prerequisites
 
-- Home Assistant version 2023.1.0 or higher
+- Home Assistant version 2025.11.0 or higher
 - Valid SFPUC account credentials
 
 #### Installation Steps

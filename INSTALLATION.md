@@ -6,7 +6,7 @@ This guide provides detailed step-by-step instructions for installing and config
 
 Before starting, ensure you have:
 
-- Home Assistant 2023.1.0 or higher
+- Home Assistant 2025.11.0 or higher
 - Admin access to Home Assistant
 - Valid SFPUC account credentials (username and password)
 - Internet connection for data fetching

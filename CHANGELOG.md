@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Requirements
+
+- **Home Assistant**: 2025.11.0 or later. The external statistics metadata
+  includes `unit_class`, which Home Assistant only supports from 2025.11.0
+  onwards; on older versions the statistics are rejected by the recorder.
+  The previously declared minimum (2023.1.0 / 2025.4.0) was therefore wrong.
+
+### Bug Fixes
+
+- **Statistics typing**: accept Home Assistant's `StatisticsRow` when looking
+  up the newest statistic start, so mypy passes against current Home Assistant.
+
+### Maintenance
+
+- **Manifest**: stop declaring `requests`, which is a dependency of Home
+  Assistant itself and is rejected by hassfest for custom integrations.
+- **CI**: pin the Home Assistant, `pytest-homeassistant-custom-component` and
+  `pycares` versions together per test matrix leg, so each leg really tests
+  the Home Assistant version it claims.
+
 ## 1.1.0 (2026-11-04)
 
 ### New Features & Improvements

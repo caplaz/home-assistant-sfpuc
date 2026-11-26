@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping, Sequence
 from datetime import datetime, timedelta
 import logging
 from typing import Any
@@ -31,7 +32,9 @@ from .utils import async_detect_billing_day, calculate_billing_period
 _LOGGER = logging.getLogger(__name__)
 
 
-def _newest_statistic_start(rows: list[dict[str, Any]]) -> datetime | None:
+def _newest_statistic_start(
+    rows: Sequence[Mapping[str, Any]],
+) -> datetime | None:
     """Return the newest ``start`` timestamp from statistics rows.
 
     Rows carry ``start`` as either a UNIX timestamp or a datetime depending
@@ -39,6 +42,8 @@ def _newest_statistic_start(rows: list[dict[str, Any]]) -> datetime | None:
 
     Args:
         rows: Statistics rows as returned by ``statistics_during_period``.
+            Home Assistant returns ``StatisticsRow`` typed dicts, so accept
+            any mapping rather than a concrete ``dict``.
 
     Returns:
         The newest start time as an aware datetime, or None if unavailable.

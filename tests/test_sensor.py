@@ -2,7 +2,7 @@
 
 from unittest.mock import Mock
 
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType
@@ -54,9 +54,28 @@ class TestSFWaterSensor:
         assert sensor.device_class == SensorDeviceClass.WATER
         assert sensor.native_unit_of_measurement == UnitOfVolume.GALLONS
         assert (
-            sensor.state_class is None
-        )  # No state_class to prevent duplicate statistics
+            sensor.state_class == SensorStateClass.TOTAL
+        )  # Cumulative for the billing period, resets with the new bill
         assert sensor.suggested_display_precision == 1
+
+    def test_sensor_is_eligible_as_energy_water_source(self):
+        """The sensor can be used as a water source in the Energy dashboard.
+
+        Home Assistant only offers an entity as an Energy water source when it
+        has the water device class, a supported volume unit and a state class,
+        and it only enables the price options for such an entity - they stay
+        disabled for an external statistic.
+        """
+        from homeassistant.components.energy.validate import WATER_USAGE_UNITS
+
+        sensor = SFWaterSensor(self.coordinator, WATER_SENSORS[0])
+
+        assert sensor.device_class == SensorDeviceClass.WATER
+        assert sensor.state_class == SensorStateClass.TOTAL
+        assert (
+            sensor.native_unit_of_measurement
+            in WATER_USAGE_UNITS[SensorDeviceClass.WATER]
+        )
 
     def test_hourly_usage_sensor_properties(self):
         """Test hourly usage sensor properties."""

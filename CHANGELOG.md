@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### New Features & Improvements
+
+- **Price the water usage in the Energy dashboard** (issue #14): the primary
+  sensor is now published with the `total` state class (cumulative for the
+  current billing period, restarting with the new bill). Home Assistant only
+  enables the "use an entity with the current price" and "use a static price"
+  options for an entity-based water source and keeps them disabled for an
+  external statistic, so the sensor could not be priced before. Adding the
+  sensor as the water source ("Use an entity") makes both price options
+  selectable.
+
 ### Requirements
 
 - **Home Assistant**: 2025.11.0 or later. The external statistics metadata

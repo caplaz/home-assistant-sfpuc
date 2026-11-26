@@ -178,10 +178,10 @@ The integration creates a single primary sensor that displays current billing pe
 - **San Francisco Water Power Sewer** (`sensor.sfpuc_water_account_{account}_current_bill_water_usage_to_date`)
   - **State**: Current billing period cumulative water usage in gallons (from last bill date to today)
   - **Device Class**: `water`
-  - **State Class**: None (statistics-only approach)
+  - **State Class**: `total` (cumulative for the current billing period, restarts with the new bill)
   - **Unit**: `gal` (gallons)
   - **Update**: Every 12 hours
-  - **Statistics**: Links to underlying `sfpuc:{account}_water_consumption` statistics for historical data
+  - **Statistics**: The entity is recorded as a regular long-term statistic, and it links to the underlying `sfpuc:{account}_water_consumption` statistics for the full history
 
 ### Historical Data Access
 
@@ -209,6 +209,38 @@ The integration enables water usage monitoring in the Energy dashboard:
    - Configure display preferences
 3. **View Historical Data**: The dashboard will show water usage trends over time using underlying statistics
 4. **Statistics Integration**: Historical data is automatically stored for long-term analysis
+
+#### Price your water usage
+
+The Energy dashboard can attach a price to a water source, in two ways:
+
+- **"Use an entity with the current price"** — point at a sensor that reports
+  the price per volume (for example dollars per gallon).
+- **"Use a static price"** — a fixed price per volume.
+
+Both options are available for this integration's sensor, because the sensor is
+published with the `total` state class and is therefore an ordinary entity
+statistic:
+
+1. Go to Settings → Dashboards → Energy → Edit.
+2. Edit (or add) the water source and choose **Use an entity**, then select
+   `sensor.sfpuc_water_account_{account}_current_bill_water_usage_to_date`.
+3. The price options are now selectable: pick a price entity or enter a static
+   price.
+
+If the water source stays on the external statistic
+(`sfpuc:{account}_water_consumption`, the "Use a statistic" option), the price
+options stay disabled — Home Assistant only offers them for entity-based water
+sources.
+
+Two things worth knowing:
+
+- Do not add the sensor *and* the external statistic as water sources. They
+  describe the same consumption and the dashboard would count it twice.
+- The sensor's own long-term statistics start when the state class was
+  introduced. The complete history stays available through the external
+  statistic, so switching a water source from the statistic to the entity may
+  show less history in the dashboard for a while.
 
 #### Add Sensor Card
 

@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfVolume
@@ -49,8 +50,14 @@ WATER_SENSORS: tuple[SFWaterEntityDescription, ...] = (
         translation_key="current_bill_water_usage_to_date",
         device_class=SensorDeviceClass.WATER,
         native_unit_of_measurement=UnitOfVolume.GALLONS,
-        # No state_class - prevents recorder from creating statistics
-        # Statistics are managed via external statistics only
+        # `total`: the value is the cumulative usage of the current billing
+        # period, which restarts when a new bill arrives. Publishing the state
+        # class lets the recorder keep long-term statistics for this entity,
+        # which is what the Energy dashboard needs to offer it as a water
+        # source - including the price options ("use an entity with the
+        # current price" / "use a static price"), which stay disabled for an
+        # external statistic.
+        state_class=SensorStateClass.TOTAL,
         suggested_display_precision=1,
         value_fn=lambda data: data.get("current_bill_usage", 0),
     ),

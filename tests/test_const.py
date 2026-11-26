@@ -176,10 +176,15 @@ class TestManifest:
         assert isinstance(requirements, list)
         assert len(requirements) > 0
 
-        # Should include requests and beautifulsoup4
+        # Should include beautifulsoup4 and voluptuous.
+        # requests must NOT be listed: it is a dependency of Home Assistant
+        # itself and hassfest rejects custom integrations that declare it.
         req_strings = [str(req) for req in requirements]
-        assert any("requests" in req for req in req_strings)
         assert any("beautifulsoup4" in req for req in req_strings)
+        assert any("voluptuous" in req for req in req_strings)
+        assert not any(
+            req.split(">")[0].split("<")[0].strip() == "requests" for req in req_strings
+        )
 
 
 class TestVersionConsistency:

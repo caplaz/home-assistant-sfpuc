@@ -104,9 +104,11 @@ jobs:
         run: |
           # Set up Python environment
           python -m pip install --upgrade pip
-          pip install homeassistant==2025.4.0
+          # pycares<5 matches the aiodns 3.x shipped with this Home Assistant
+          pip install "homeassistant==2025.11.0" "pycares<5"
           # Install component requirements from manifest
-          pip install requests>=2.25.1 beautifulsoup4>=4.9.3 voluptuous>=0.13.1
+          # (requests is provided by Home Assistant core, so it is not listed)
+          pip install beautifulsoup4>=4.9.3 voluptuous>=0.13.1
 
           # Test that the component can be imported
           export PYTHONPATH="${PWD}:${PYTHONPATH}"
@@ -135,7 +137,18 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.13"]
-        home-assistant-version: ["2025.11.0"]
+        home-assistant-version: ["2025.11.0", "2026.2.3"]
+        include:
+          # pytest-homeassistant-custom-component pins an exact Home Assistant
+          # release, so pin the pair to make sure each leg tests that version.
+          # Home Assistant up to 2025.11 ships aiodns 3.x, which only works at
+          # runtime with pycares 4.x; 2026.x ships aiodns 4.x, which needs 5.x.
+          - home-assistant-version: "2025.11.0"
+            phcc-version: "0.13.294"
+            pycares-constraint: "pycares<5"
+          - home-assistant-version: "2026.2.3"
+            phcc-version: "0.13.316"
+            pycares-constraint: "pycares>=5,<6"
 
     steps:
       - uses: actions/checkout@v4
@@ -154,7 +167,12 @@ jobs:
           # Install setuptools and wheel for building packages
           pip install --upgrade setuptools wheel
           # Use --only-binary to prefer pre-built wheels and avoid compilation issues
-          pip install --only-binary=aiohttp,yarl,multidict homeassistant==${{ matrix.home-assistant-version }}
+          # Install Home Assistant, the matching test harness and the matching
+          # pycares major version in one resolution so pip cannot mix them up.
+          pip install --only-binary=aiohttp,yarl,multidict \
+            "homeassistant==${{ matrix.home-assistant-version }}" \
+            "${{ matrix.pycares-constraint }}" \
+            "pytest-homeassistant-custom-component==${{ matrix.phcc-version }}"
 
           # Install dev dependencies
           pip install --only-binary=all -r requirements-dev.txt
